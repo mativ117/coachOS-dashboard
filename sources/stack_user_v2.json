@@ -1,0 +1,65 @@
+{
+  "format": "CoachOS-play-v2",
+  "name": "Stack — Multi-lectures",
+  "court": "half-court",
+  "steps": [
+    {
+      "players": [{"n":1,"x":179,"y":287},{"n":2,"x":333,"y":39},{"n":3,"x":242,"y":178},{"n":4,"x":26,"y":43},{"n":5,"x":127,"y":174}],
+      "lines": [{"type":"pass","a":{"x":161,"y":264},"b":{"x":135,"y":205}}],
+      "note": "1 fait la passe au 5"
+    },
+    {
+      "players": [{"n":1,"x":179,"y":287},{"n":2,"x":334,"y":42},{"n":3,"x":242,"y":178},{"n":4,"x":28,"y":40},{"n":5,"x":127,"y":174}],
+      "lines": [
+        {"type":"run","a":{"x":265,"y":169},"b":{"x":304,"y":167}},
+        {"type":"screen","a":{"x":143,"y":195},"b":{"x":125,"y":204}},
+        {"type":"run","a":{"x":148,"y":272},"b":{"x":91,"y":178}},
+        {"type":"run","a":{"x":90,"y":180},"b":{"x":116,"y":35}},
+        {"type":"pass","a":{"x":127,"y":142},"b":{"x":121,"y":39}},
+        {"type":"run","a":{"x":34,"y":58},"b":{"x":37,"y":80}}
+      ],
+      "note": "1 coupe sur le 5, coupe dans la raquette, possibilité de passe 5 vers le 1. Le 3 écarte à 45 degrés. Le 4 remonte légèrement le long de la sideline. "
+    },
+    {
+      "players": [{"n":1,"x":146,"y":41},{"n":2,"x":337,"y":35},{"n":3,"x":297,"y":170},{"n":4,"x":26,"y":69},{"n":5,"x":127,"y":174}],
+      "lines": [
+        {"type":"run","a":{"x":125,"y":45},"b":{"x":69,"y":48}},
+        {"type":"screen","a":{"x":61,"y":60},"b":{"x":56,"y":39}},
+        {"type":"run","a":{"x":56,"y":80},"b":{"x":165,"y":76}},
+        {"type":"pass","a":{"x":131,"y":152},"b":{"x":169,"y":77}}
+      ],
+      "note": "Le 1 va screen le 2, qui coupe dans la raquette. Possibilité de passe 5 vers le 2."
+    },
+    {
+      "players": [{"n":1,"x":26,"y":44},{"n":2,"x":337,"y":36},{"n":3,"x":297,"y":170},{"n":4,"x":177,"y":70},{"n":5,"x":127,"y":174}],
+      "lines": [
+        {"type":"run","a":{"x":101,"y":167},"b":{"x":71,"y":144}},
+        {"type":"screen","a":{"x":70,"y":134},"b":{"x":53,"y":150}},
+        {"type":"run","a":{"x":20,"y":68},"b":{"x":43,"y":132}},
+        {"type":"run","a":{"x":205,"y":63},"b":{"x":303,"y":45}},
+        {"type":"run","a":{"x":203,"y":92},"b":{"x":269,"y":148}},
+        {"type":"screen","a":{"x":257,"y":164},"b":{"x":281,"y":143}},
+        {"type":"screen","a":{"x":313,"y":62},"b":{"x":310,"y":29}}
+      ],
+      "note": "Le 1 remonte, pass & screen ou hand-off screen entre 1 et 5. Le 4 choisit d’aller screen sur le défenseur du 2 ou du 3, coupe du joueur concerné "
+    },
+    {
+      "players": [{"n":1,"x":91,"y":188},{"n":2,"x":186,"y":47},{"n":3,"x":297,"y":170},{"n":4,"x":332,"y":40},{"n":5,"x":67,"y":131}],
+      "lines": [
+        {"type":"run","a":{"x":161,"y":44},"b":{"x":30,"y":45}},
+        {"type":"pass","a":{"x":107,"y":172},"b":{"x":169,"y":72}},
+        {"type":"pass","a":{"x":117,"y":192},"b":{"x":269,"y":177}},
+        {"type":"pass","a":{"x":85,"y":168},"b":{"x":79,"y":153}}
+      ],
+      "note": "Short roll du 5. Le 4 après son screen écarte, le 2 s’il n’a pas reçu la balle, sort dans le coin opposé. \n\nLe 1 a 3 option de passe. "
+    },
+    {
+      "players": [{"n":1,"x":180,"y":211},{"n":2,"x":34,"y":35},{"n":3,"x":297,"y":170},{"n":4,"x":332,"y":40},{"n":5,"x":67,"y":131}],
+      "lines": [
+        {"type":"run","a":{"x":313,"y":60},"b":{"x":306,"y":128}},
+        {"type":"screen","a":{"x":314,"y":146},"b":{"x":295,"y":138}}
+      ],
+      "note": "Si pas d’option, renversement vers le 3. Le 1 décalage au top pour offrir une possibilité de back back du 3, le 4 vient mettre une screen, p&r entre 3 et 4. "
+    }
+  ]
+}
