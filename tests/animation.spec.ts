@@ -320,8 +320,26 @@ test("timing enregistré et aperçu animé depuis l’éditeur", async ({ page }
     .filter({ hasText: /^Animation/ })
     .click();
   await page
-    .getByRole("spinbutton", { name: "Durée de l’étape (secondes)" })
-    .fill("2.5");
+    .getByRole("textbox", { name: "Durée de l’étape (secondes)" })
+    .fill("");
+  await page
+    .getByRole("textbox", { name: "Durée de l’étape (secondes)" })
+    .pressSequentially("2,5");
+  await page
+    .getByRole("textbox", { name: "Durée de l’étape (secondes)" })
+    .press("Tab");
+  await page
+    .getByRole("textbox", { name: "Groupe de Course 1", exact: true })
+    .fill("1");
+  await page
+    .getByRole("textbox", { name: "Groupe de Course 1", exact: true })
+    .press("Tab");
+  await page
+    .getByRole("textbox", { name: "Durée de Course 1", exact: true })
+    .fill("1.2");
+  await page
+    .getByRole("textbox", { name: "Durée de Course 1", exact: true })
+    .press("Enter");
   await ready(page);
   await page.getByRole("button", { name: "Aperçu animé", exact: true }).click();
   await expect(
@@ -340,8 +358,14 @@ test("timing enregistré et aperçu animé depuis l’éditeur", async ({ page }
     .filter({ hasText: /^Animation/ })
     .click();
   await expect(
-    page.getByRole("spinbutton", { name: "Durée de l’étape (secondes)" }),
-  ).toHaveValue("2.5");
+    page.getByRole("textbox", { name: "Durée de l’étape (secondes)" }),
+  ).toHaveValue("2,5");
+  await expect(
+    page.getByRole("textbox", { name: "Groupe de Course 1", exact: true }),
+  ).toHaveValue("1");
+  await expect(
+    page.getByRole("textbox", { name: "Durée de Course 1", exact: true }),
+  ).toHaveValue("1,2");
 });
 
 test("plein écran natif si disponible, sinon agrandissement accessible", async ({

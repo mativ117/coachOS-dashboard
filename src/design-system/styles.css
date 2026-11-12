@@ -2128,3 +2128,10 @@ main {
     margin-top: 0;
   }
 }
+
+.timing-input-error {
+  font-size: 10px;
+  color: #84352b;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

@@ -1,3 +1,4 @@
+import { TimingInput } from "./TimingInput";
 import { AnimationPlayer } from "../animation/AnimationPlayer";
 import { compileStep } from "../animation/engine";
 import { useEffect, useRef, useState } from "react";
@@ -937,34 +938,34 @@ export function Editor({
               <div className="panel-body">
                 <label>
                   Durée de l’étape (s)
-                  <input
-                    aria-label="Durée de l’étape (secondes)"
-                    type="number"
-                    min="0.1"
-                    max="30"
-                    step="0.1"
-                    value={step.timing ? step.timing.durationMs / 1000 : ""}
+                  <TimingInput
+                    label="Durée de l’étape (secondes)"
+                    min={0.1}
+                    max={30}
+                    value={
+                      step.timing ? step.timing.durationMs / 1000 : undefined
+                    }
                     placeholder="1,4 par défaut"
-                    onChange={(e) => {
-                      const value = e.target.value;
+                    onCommit={(value) =>
                       run(
                         () =>
                           commands.changeStep(draft, step.id, (s) => {
-                            if (value)
+                            if (value !== undefined)
                               s.timing = {
-                                durationMs: Math.round(Number(value) * 1000),
+                                durationMs: Math.round(value * 1000),
                               };
                             else delete s.timing;
                           }),
                         `step-duration:${step.id}`,
-                      );
-                    }}
+                      )
+                    }
                   />
                 </label>
                 <p>
-                  Les actions d’un même groupe commencent ensemble. Les groupes
-                  suivants attendent la fin du précédent. Une durée d’action
-                  explicite peut allonger l’étape.
+                  Validez un champ avec Entrée ou en le quittant. Les actions
+                  d’un même groupe commencent ensemble. Les groupes suivants
+                  attendent la fin du précédent. Une durée d’action explicite
+                  peut allonger l’étape.
                 </p>
                 {step.actions
                   .filter(
@@ -983,14 +984,14 @@ export function Editor({
                       </legend>
                       <label>
                         Groupe
-                        <input
-                          aria-label={`Groupe ${a.id}`}
-                          type="number"
-                          min="0"
-                          max="99"
-                          step="1"
-                          value={a.order ?? 0}
-                          onChange={(e) =>
+                        <TimingInput
+                          label={`Groupe de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                          min={0}
+                          max={99}
+                          integer
+                          value={a.order}
+                          placeholder="0"
+                          onCommit={(value) =>
                             run(
                               () =>
                                 commands.editAction(
@@ -998,7 +999,9 @@ export function Editor({
                                   step.id,
                                   a.id,
                                   (action) => {
-                                    action.order = Number(e.target.value);
+                                    if (value !== undefined)
+                                      action.order = value;
+                                    else delete action.order;
                                   },
                                 ),
                               `order:${a.id}`,
@@ -1008,16 +1011,13 @@ export function Editor({
                       </label>
                       <label>
                         Durée (s)
-                        <input
-                          aria-label={`Durée ${a.id}`}
-                          type="number"
-                          min="0.1"
-                          max="30"
-                          step="0.1"
-                          value={a.durationMs ? a.durationMs / 1000 : ""}
+                        <TimingInput
+                          label={`Durée de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                          min={0.1}
+                          max={30}
+                          value={a.durationMs ? a.durationMs / 1000 : undefined}
                           placeholder="Automatique"
-                          onChange={(e) => {
-                            const value = e.target.value;
+                          onCommit={(value) =>
                             run(
                               () =>
                                 commands.editAction(
@@ -1025,16 +1025,16 @@ export function Editor({
                                   step.id,
                                   a.id,
                                   (action) => {
-                                    if (value)
+                                    if (value !== undefined)
                                       action.durationMs = Math.round(
-                                        Number(value) * 1000,
+                                        value * 1000,
                                       );
                                     else delete action.durationMs;
                                   },
                                 ),
                               `action-duration:${a.id}`,
-                            );
-                          }}
+                            )
+                          }
                         />
                       </label>
                     </fieldset>
