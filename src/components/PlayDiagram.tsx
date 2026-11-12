@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type ReactNode, type SVGProps } from "react";
 import type { Play, Point, Step } from "../model/types";
 
 /** Même interpolation Catmull-Rom → Bézier que le lecteur historique. */
@@ -13,12 +13,16 @@ export function curve(points: Point[]): string {
   }
   return d;
 }
-function bounds(play: Play): string {
+export function bounds(play: Play): string {
   // Cadrage de l'ensemble des coordonnées brutes ; aucune mise à l'échelle tactique.
-  const points = play.commonSteps.flatMap((s) => [
+  const points = [
+    ...play.commonSteps,
+    ...play.branches.flatMap((b) => b.steps),
+  ].flatMap((s) => [
     ...Object.values(s.afterState.players),
     ...s.actions.flatMap((a) => a.geometry.points),
   ]);
+  if (!points.length) return "0 0 360 320";
   const xs = points.map((p) => p[0]),
     ys = points.map((p) => p[1]);
   const x = Math.min(...xs) - 24,
@@ -29,10 +33,16 @@ export function PlayDiagram({
   play,
   step,
   miniature = false,
+  overlay,
+  svgProps,
+  viewBox,
 }: {
   play: Play;
   step: Step;
   miniature?: boolean;
+  overlay?: ReactNode;
+  svgProps?: SVGProps<SVGSVGElement>;
+  viewBox?: string;
 }) {
   const id = useId();
   const raw = play.court.coordinateSpace === "stack-raw";
@@ -40,14 +50,24 @@ export function PlayDiagram({
   const screens = step.actions.filter(
     (a) => a.geometry.kind === "legacy-screen",
   );
-  const paths = step.actions.filter((a) => a.geometry.kind !== "legacy-screen");
+  const paths = step.actions.filter(
+    (a) => a.geometry.kind !== "legacy-screen" && a.kind !== "annotation",
+  );
   return (
     <svg
       className={`court-svg play-diagram ${raw ? "raw-diagram" : ""}`}
-      viewBox={raw ? bounds(play) : "0 0 750 655"}
+      viewBox={
+        viewBox ??
+        (raw
+          ? bounds(play)
+          : play.court.kind === "full"
+            ? "0 0 750 1215"
+            : "0 0 750 655")
+      }
       role="img"
       aria-hidden={miniature ? true : undefined}
       aria-labelledby={miniature ? undefined : `${id}-title`}
+      {...svgProps}
     >
       {!miniature && (
         <title id={`${id}-title`}>
@@ -72,16 +92,25 @@ export function PlayDiagram({
       </defs>
       {!raw && (
         <g className="historical-court">
-          <rect width="750" height="655" className="court-surround" />
+          <rect
+            width="750"
+            height={play.court.kind === "full" ? 1215 : 655}
+            className="court-surround"
+          />
           <rect
             x="75"
             y="42"
             width="600"
-            height="560"
+            height={play.court.kind === "full" ? 1120 : 560}
             className="court-floor"
           />
           <g fill="none" className="historical-lines" strokeWidth="3">
-            <rect x="75" y="42" width="600" height="560" />
+            <rect
+              x="75"
+              y="42"
+              width="600"
+              height={play.court.kind === "full" ? 1120 : 560}
+            />
             <rect
               x="277"
               y="42"
@@ -105,6 +134,20 @@ export function PlayDiagram({
           />
         </g>
       )}
+      {play.court.kind === "full" && !raw && (
+        <g
+          transform="translate(750 1204) rotate(180)"
+          className="historical-lines"
+          fill="none"
+          strokeWidth="3"
+        >
+          <rect x="277" y="42" width="196" height="232" className="court-key" />
+          <path d="M277 274A98 98 0 0 0 473 274M111 42V169A270 270 0 0 0 639 169V42M326 67H424" />
+          <circle cx="375" cy="105" r="9" />
+          <path d="M75 602H675" />
+          <circle cx="375" cy="602" r="72" />
+        </g>
+      )}
       <g data-layer="paths">
         {paths.map((a) => {
           const points = a.geometry.points;
@@ -125,7 +168,7 @@ export function PlayDiagram({
                 }
                 className={`action-${a.kind}`}
                 fill="none"
-                strokeWidth={raw ? 2.3 : 4.3}
+                strokeWidth={a.width ?? (raw ? 2.3 : 4.3)}
                 strokeDasharray={
                   a.kind === "pass" ? (raw ? "5 4" : "9 8") : undefined
                 }
@@ -138,7 +181,7 @@ export function PlayDiagram({
                 <path
                   d={`M${endX - dx} ${endY - dy}L${endX + dx} ${endY + dy}`}
                   className="action-screen"
-                  strokeWidth="2.3"
+                  strokeWidth={a.width ?? (raw ? 2.3 : 4.3)}
                 />
               )}
             </g>
@@ -158,6 +201,40 @@ export function PlayDiagram({
             />
           );
         })}
+      </g>
+      <g data-layer="annotations">
+        {step.actions
+          .filter((a) => a.kind === "annotation")
+          .map((a) => (
+            <text
+              key={a.id}
+              x={a.geometry.points[0][0]}
+              y={a.geometry.points[0][1]}
+              className="court-annotation"
+              fontSize={raw ? 11 : 19}
+            >
+              {a.text}
+            </text>
+          ))}
+      </g>
+      <g data-layer="defenders">
+        {Object.entries(state.defenders ?? {}).map(([n, p]) => (
+          <g
+            key={n}
+            transform={`translate(${p[0]} ${p[1]})`}
+            className="play-defender"
+            data-defender={n}
+          >
+            <circle r={raw ? 10 : 21} />
+            <text
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={raw ? 9 : 17}
+            >
+              D{n}
+            </text>
+          </g>
+        ))}
       </g>
       <g data-layer="players">
         {Object.entries(state.players).map(([player, position]) => (
@@ -198,6 +275,7 @@ export function PlayDiagram({
           />
         )}
       </g>
+      {overlay}
     </svg>
   );
 }

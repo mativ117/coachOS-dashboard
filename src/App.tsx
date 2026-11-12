@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Editor } from "./editor/Editor";
+import { createPlay } from "./editor/commands";
 import { Arrow } from "./components/Arrow";
 import { Court } from "./components/Court";
 import { PlayDiagram } from "./components/PlayDiagram";
@@ -29,7 +31,17 @@ function readRoute() {
 const href = (space: Space, play?: Play) =>
   `#/${space}${play ? `?play=${encodeURIComponent(play.id)}` : ""}`;
 export function App() {
-  const { library, status, error, updatePreferences } = useLibrary();
+  const {
+    library,
+    status,
+    error,
+    updatePreferences,
+    savePlay,
+    retry,
+    canRetry,
+  } = useLibrary();
+  const [newPlay, setNewPlay] = useState(false);
+  const [createError, setCreateError] = useState("");
   const [route, setRoute] = useState(readRoute);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Tous les systèmes");
@@ -64,7 +76,9 @@ export function App() {
           ?.playIds.includes(p.id)),
   );
   return (
-    <div className={`app ${presentation ? "is-presenting" : ""}`}>
+    <div
+      className={`app ${presentation ? "is-presenting" : route.space === "editor" ? "is-editing" : ""}`}
+    >
       <a
         href="#main-content"
         className="skip-link"
@@ -122,7 +136,7 @@ export function App() {
             Mon espace <span className="breadcrumb-divider">/</span>
             <strong>{labels[route.space]}</strong>
           </span>
-          <span className="phase-badge">Sources migrées · Phase 2</span>
+          <span className="phase-badge">Éditeur · Phase 3</span>
         </header>
         <main id="main-content" ref={main} tabIndex={-1}>
           <div className="storage-line" role="status">
@@ -139,13 +153,23 @@ export function App() {
             <div className="storage-error" role="alert">
               <strong>La sauvegarde locale n’est pas disponible.</strong>
               <p>
-                {error} Les données existantes ne sont pas remplacées. Cet écran
-                utilise les sources chargées ; l’export ci-dessous porte sur ces
-                données et ne restaure pas un stockage illisible.
+                {error} Les données existantes ne sont pas remplacées. L’export
+                contient les données de travail affichées, y compris les
+                modifications non enregistrées ; il ne restaure pas un stockage
+                illisible.
               </p>
               <button onClick={() => downloadEmergency(library)}>
                 Exporter les données affichées (JSON)
               </button>
+              {canRetry && (
+                <button
+                  onClick={() => {
+                    void retry();
+                  }}
+                >
+                  Réessayer la sauvegarde
+                </button>
+              )}
             </div>
           )}
           {route.space === "library" ? (
@@ -165,13 +189,46 @@ export function App() {
                   Copie de secours JSON <Arrow />
                 </button>
               </div>
+              <button
+                className="new-play-button"
+                disabled={status === "loading"}
+                onClick={() => setNewPlay((v) => !v)}
+              >
+                + Nouveau système
+              </button>
+              {newPlay && (
+                <form
+                  className="new-play-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    try {
+                      const p = createPlay(
+                        String(new FormData(e.currentTarget).get("name")),
+                      );
+                      savePlay(p);
+                      setNewPlay(false);
+                      setCreateError("");
+                      location.hash = href("editor", p).slice(1);
+                    } catch (error) {
+                      setCreateError((error as Error).message);
+                    }
+                  }}
+                >
+                  <label>
+                    Nom du nouveau système
+                    <input name="name" maxLength={100} required autoFocus />
+                  </label>
+                  <button type="submit">Créer le système</button>
+                  {createError && <p role="alert">{createError}</p>}
+                </form>
+              )}
               <div className="notice">
                 <span className="notice-icon" aria-hidden="true">
                   i
                 </span>
                 <p>
                   <strong>Votre playbook prend vie.</strong> Les cinq systèmes
-                  OWLS et Stack sont disponibles en lecture statique. Les
+                  OWLS et Stack sont disponibles en lecture et en édition. Les
                   données sont locales à ce navigateur. Stack reste à confirmer
                   ; Baseline et Losange attendent leurs premières étapes.
                 </p>
@@ -185,7 +242,12 @@ export function App() {
                     Mes systèmes{" "}
                     <span className="count">{library.plays.length}</span>
                   </h2>
-                  <span className="section-meta">6 sources · 2 brouillons</span>
+                  <span className="section-meta">
+                    {library.plays.filter((p) => p.status !== "draft").length}{" "}
+                    systèmes ·{" "}
+                    {library.plays.filter((p) => p.status === "draft").length}{" "}
+                    brouillons
+                  </span>
                 </div>
                 <div className="filters">
                   <label className="search">
@@ -247,13 +309,15 @@ export function App() {
                           <Court miniature />
                         )}
                         <span
-                          className={`card-status ${p.status !== "imported" ? "draft" : ""}`}
+                          className={`card-status ${p.status === "draft" || p.status === "needs-review" ? "draft" : ""}`}
                         >
                           {p.status === "draft"
                             ? "Brouillon"
                             : p.status === "needs-review"
                               ? "À confirmer"
-                              : "Importé"}
+                              : p.status === "edited"
+                                ? "Modifié"
+                                : "Importé"}
                         </span>
                         <span className="card-index" aria-hidden="true">
                           {String(library.plays.indexOf(p) + 1).padStart(
@@ -324,20 +388,33 @@ export function App() {
                   <Arrow />
                 </a>
               </div>
-              <PlayViewer
-                key={play.id}
-                play={play}
-                presentation={presentation}
-                court={library.preferences.courtPreview}
-                onCourt={(kind) => {
-                  void updatePreferences(kind);
-                }}
-                saving={
-                  status === "loading" ||
-                  status === "saving" ||
-                  status === "error"
-                }
-              />
+              {route.space === "editor" ? (
+                status === "loading" ? (
+                  <p>Ouverture de l’éditeur…</p>
+                ) : (
+                  <Editor
+                    key={play.id}
+                    play={play}
+                    library={library}
+                    onSave={savePlay}
+                  />
+                )
+              ) : (
+                <PlayViewer
+                  key={play.id}
+                  play={play}
+                  presentation={presentation}
+                  court={library.preferences.courtPreview}
+                  onCourt={(kind) => {
+                    void updatePreferences(kind);
+                  }}
+                  saving={
+                    status === "loading" ||
+                    status === "saving" ||
+                    status === "error"
+                  }
+                />
+              )}
             </>
           )}
           <footer className="page-footer">

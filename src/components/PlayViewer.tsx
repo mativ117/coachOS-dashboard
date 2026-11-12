@@ -20,7 +20,7 @@ export function PlayViewer({
   const [index, setIndex] = useState(0);
   const steps = sequence(play, branch);
   const step = steps[index] ?? steps[0];
-  const report = play.metadata.report;
+  const report = play.metadata.originalReport ?? play.metadata.report;
   return (
     <>
       <div className="notice">
@@ -43,8 +43,7 @@ export function PlayViewer({
             <>
               <strong>Lecture des sources.</strong> Étapes, lectures et
               possession explicite sont conservées. Les passes dessinées restent
-              des options. L’édition et l’animation arrivent aux prochaines
-              phases.
+              des options. L’animation arrivera à la prochaine phase.
             </>
           )}
         </p>
