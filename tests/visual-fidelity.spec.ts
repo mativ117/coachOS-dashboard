@@ -13,7 +13,7 @@ test("rendu statique : positions, courbes, marqueurs écran et ballon identiques
   );
   const original = await context.newPage();
   await original.emulateMedia({ reducedMotion: "reduce" });
-  await original.goto("http://127.0.0.1:4176/reference-original");
+  await original.goto("http://127.0.0.1:4178/reference-original");
   for (let pi = 0; pi < 5; pi++) {
     const old = snapshot.historical[pi];
     const id = [

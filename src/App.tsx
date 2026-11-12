@@ -31,15 +31,7 @@ function readRoute() {
 const href = (space: Space, play?: Play) =>
   `#/${space}${play ? `?play=${encodeURIComponent(play.id)}` : ""}`;
 export function App() {
-  const {
-    library,
-    status,
-    error,
-    updatePreferences,
-    savePlay,
-    retry,
-    canRetry,
-  } = useLibrary();
+  const { library, status, error, savePlay, retry, canRetry } = useLibrary();
   const [newPlay, setNewPlay] = useState(false);
   const [createError, setCreateError] = useState("");
   const [route, setRoute] = useState(readRoute);
@@ -136,7 +128,7 @@ export function App() {
             Mon espace <span className="breadcrumb-divider">/</span>
             <strong>{labels[route.space]}</strong>
           </span>
-          <span className="phase-badge">Éditeur · Phase 3</span>
+          <span className="phase-badge">Animation · Phase 4</span>
         </header>
         <main id="main-content" ref={main} tabIndex={-1}>
           <div className="storage-line" role="status">
@@ -400,20 +392,7 @@ export function App() {
                   />
                 )
               ) : (
-                <PlayViewer
-                  key={play.id}
-                  play={play}
-                  presentation={presentation}
-                  court={library.preferences.courtPreview}
-                  onCourt={(kind) => {
-                    void updatePreferences(kind);
-                  }}
-                  saving={
-                    status === "loading" ||
-                    status === "saving" ||
-                    status === "error"
-                  }
-                />
+                <PlayViewer key={play.id} play={play} />
               )}
             </>
           )}

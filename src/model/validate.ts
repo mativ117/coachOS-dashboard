@@ -83,9 +83,19 @@ function action(v: unknown): asserts v is Action {
   record(
     v,
     ["id", "kind", "geometry", "status"],
-    ["actorId", "recipientId", "text", "width", "ballBeforeConfirmation"],
+    [
+      "actorId",
+      "recipientId",
+      "text",
+      "width",
+      "ballBeforeConfirmation",
+      "order",
+      "durationMs",
+    ],
   );
   id(v.id);
+  if (v.order !== undefined) integer(v.order, 0, 99);
+  if (v.durationMs !== undefined) integer(v.durationMs, 100, 30000);
   choice(v.kind, ["run", "cut", "pass", "screen", "annotation"]);
   choice(v.status, ["recorded", "optional", "unassigned", "confirmed"]);
   for (const k of ["actorId", "recipientId"])
@@ -130,15 +140,15 @@ function action(v: unknown): asserts v is Action {
     fail("passe sans validation explicite");
 }
 function step(v: unknown): asserts v is Step {
-  record(v, [
-    "id",
-    "title",
-    "note",
-    "beforeState",
-    "afterState",
-    "actions",
-    "flags",
-  ]);
+  record(
+    v,
+    ["id", "title", "note", "beforeState", "afterState", "actions", "flags"],
+    ["timing"],
+  );
+  if (v.timing !== undefined) {
+    record(v.timing, ["durationMs"]);
+    integer(v.timing.durationMs, 100, 30000);
+  }
   id(v.id);
   text(v.title, 300);
   text(v.note);
@@ -230,7 +240,7 @@ export function validatePlay(v: unknown): Play {
     "metadata",
   ]);
   id(v.id);
-  choice(v.schemaVersion, [1, 2]);
+  choice(v.schemaVersion, [1, 2, 3]);
   integer(v.revision, 1);
   iso(v.createdAt);
   iso(v.updatedAt);
@@ -280,6 +290,17 @@ export function validatePlay(v: unknown): Play {
       ))
   )
     fail("fonction d’édition nécessitant le schéma 2");
+  if (
+    v.schemaVersion !== 3 &&
+    allSteps.some(
+      (s) =>
+        s.timing !== undefined ||
+        s.actions.some(
+          (a) => a.order !== undefined || a.durationMs !== undefined,
+        ),
+    )
+  )
+    fail("timing nécessitant le schéma 3");
   unique([
     v.id,
     ...v.branches.map((b) => (b as { id: string }).id),

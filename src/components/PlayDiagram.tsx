@@ -1,5 +1,5 @@
 import { useId, type ReactNode, type SVGProps } from "react";
-import type { Play, Point, Step } from "../model/types";
+import type { Play, Point, Step, State } from "../model/types";
 
 /** Même interpolation Catmull-Rom → Bézier que le lecteur historique. */
 export function curve(points: Point[]): string {
@@ -36,6 +36,7 @@ export function PlayDiagram({
   overlay,
   svgProps,
   viewBox,
+  state: sampledState,
 }: {
   play: Play;
   step: Step;
@@ -43,10 +44,11 @@ export function PlayDiagram({
   overlay?: ReactNode;
   svgProps?: SVGProps<SVGSVGElement>;
   viewBox?: string;
+  state?: State;
 }) {
   const id = useId();
   const raw = play.court.coordinateSpace === "stack-raw";
-  const state = step.afterState;
+  const state = sampledState ?? step.afterState;
   const screens = step.actions.filter(
     (a) => a.geometry.kind === "legacy-screen",
   );
