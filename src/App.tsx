@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Arrow } from "./components/Arrow";
-import { Court, type CourtKind } from "./components/Court";
-import { catalog, type CatalogPlay } from "./library/catalog";
+import { Court } from "./components/Court";
+import { PlayDiagram } from "./components/PlayDiagram";
+import { PlayViewer } from "./components/PlayViewer";
+import type { Play } from "./model/types";
+import { useLibrary } from "./storage/useLibrary";
+import { downloadEmergency } from "./import-export/emergency";
 
 type Space = "library" | "editor" | "presentation";
 const labels: Record<Space, string> = {
@@ -10,7 +14,7 @@ const labels: Record<Space, string> = {
   presentation: "Présentation",
 };
 function readRoute() {
-  const [path, query = ""] = window.location.hash.slice(1).split("?");
+  const [path, query = ""] = location.hash.slice(1).split("?");
   const space: Space =
     path === "/editor"
       ? "editor"
@@ -19,40 +23,46 @@ function readRoute() {
         : "library";
   return {
     space,
-    play:
-      catalog.find((p) => p.id === new URLSearchParams(query).get("play")) ??
-      catalog[0],
+    playId: new URLSearchParams(query).get("play") ?? "princeton",
   };
 }
-const href = (space: Space, play?: CatalogPlay) =>
-  `#/${space}${play ? `?play=${play.id}` : ""}`;
-
+const href = (space: Space, play?: Play) =>
+  `#/${space}${play ? `?play=${encodeURIComponent(play.id)}` : ""}`;
 export function App() {
+  const { library, status, error, updatePreferences } = useLibrary();
   const [route, setRoute] = useState(readRoute);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Tous les systèmes");
-  const [court, setCourt] = useState<CourtKind>("half");
+  const [collection, setCollection] = useState("all");
   const main = useRef<HTMLElement>(null);
+  const play =
+    library.plays.find((p) => p.id === route.playId) ?? library.plays[0];
   useEffect(() => {
-    const onRoute = () => {
+    const change = () => {
       setRoute(readRoute());
       main.current?.focus();
     };
-    window.addEventListener("hashchange", onRoute);
-    return () => window.removeEventListener("hashchange", onRoute);
+    addEventListener("hashchange", change);
+    return () => removeEventListener("hashchange", change);
   }, []);
   useEffect(() => {
     document.title = `CoachOS · ${labels[route.space]}`;
   }, [route.space]);
-  const results = catalog.filter(
+  const presentation = route.space === "presentation";
+  const results = library.plays.filter(
     (p) =>
-      `${p.name} ${p.description}`
+      `${p.name} ${p.metadata.description}`
         .toLocaleLowerCase("fr")
         .includes(query.toLocaleLowerCase("fr")) &&
       (filter === "Tous les systèmes" ||
-        (filter === "Brouillons" ? p.draft : p.category === filter)),
+        (filter === "Brouillons"
+          ? p.status === "draft"
+          : p.metadata.category === filter)) &&
+      (collection === "all" ||
+        library.collections
+          .find((c) => c.id === collection)
+          ?.playIds.includes(p.id)),
   );
-  const presentation = route.space === "presentation";
   return (
     <div className={`app ${presentation ? "is-presenting" : ""}`}>
       <a
@@ -83,7 +93,7 @@ export function App() {
           {(Object.keys(labels) as Space[]).map((space, i) => (
             <a
               key={space}
-              href={href(space, route.play)}
+              href={href(space, play)}
               aria-current={space === route.space ? "page" : undefined}
             >
               <span className="nav-symbol" aria-hidden="true">
@@ -102,19 +112,42 @@ export function App() {
             C
           </span>
           <div>
-            Espace personnel<small>CoachOS · Version de travail</small>
+            Playbook OWLS<small>CoachOS · Espace personnel</small>
           </div>
         </div>
       </aside>
       <div className="main-wrap">
         <header className="topbar">
           <span>
-            Mon espace <span className="breadcrumb-divider">/</span>{" "}
+            Mon espace <span className="breadcrumb-divider">/</span>
             <strong>{labels[route.space]}</strong>
           </span>
-          <span className="phase-badge">Aperçu · Phase 1</span>
+          <span className="phase-badge">Sources migrées · Phase 2</span>
         </header>
         <main id="main-content" ref={main} tabIndex={-1}>
+          <div className="storage-line" role="status">
+            {status === "loading"
+              ? "Ouverture du stockage local…"
+              : status === "saving"
+                ? "Enregistrement…"
+                : status === "saved"
+                  ? "Enregistré sur cet appareil"
+                  : "Stockage indisponible"}
+            {status === "saved" && <span> · Pensez à une copie externe.</span>}
+          </div>
+          {status === "error" && (
+            <div className="storage-error" role="alert">
+              <strong>La sauvegarde locale n’est pas disponible.</strong>
+              <p>
+                {error} Les données existantes ne sont pas remplacées. Cet écran
+                utilise les sources chargées ; l’export ci-dessous porte sur ces
+                données et ne restaure pas un stockage illisible.
+              </p>
+              <button onClick={() => downloadEmergency(library)}>
+                Exporter les données affichées (JSON)
+              </button>
+            </div>
+          )}
           {route.space === "library" ? (
             <>
               <div className="page-heading">
@@ -125,19 +158,22 @@ export function App() {
                     Retrouvez vos systèmes. Préparez votre prochaine séance.
                   </p>
                 </div>
-                <div className="heading-mark" aria-hidden="true">
-                  <Arrow />
-                </div>
+                <button
+                  className="button button-primary"
+                  onClick={() => downloadEmergency(library)}
+                >
+                  Copie de secours JSON <Arrow />
+                </button>
               </div>
               <div className="notice">
                 <span className="notice-icon" aria-hidden="true">
                   i
                 </span>
                 <p>
-                  <strong>Le terrain prend forme.</strong> Cet aperçu présente
-                  les espaces de CoachOS. Les cartes reprennent l’inventaire ;
-                  les mouvements, l’édition et la sauvegarde arrivent aux
-                  prochaines étapes.
+                  <strong>Votre playbook prend vie.</strong> Les cinq systèmes
+                  OWLS et Stack sont disponibles en lecture statique. Les
+                  données sont locales à ce navigateur. Stack reste à confirmer
+                  ; Baseline et Losange attendent leurs premières étapes.
                 </p>
               </div>
               <section
@@ -146,7 +182,8 @@ export function App() {
               >
                 <div className="section-heading">
                   <h2 id="systems-heading">
-                    Mes systèmes <span className="count">{catalog.length}</span>
+                    Mes systèmes{" "}
+                    <span className="count">{library.plays.length}</span>
                   </h2>
                   <span className="section-meta">6 sources · 2 brouillons</span>
                 </div>
@@ -160,6 +197,20 @@ export function App() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                     />
+                  </label>
+                  <label className="filter">
+                    <span className="sr-only">Filtrer les collections</span>
+                    <select
+                      value={collection}
+                      onChange={(e) => setCollection(e.target.value)}
+                    >
+                      <option value="all">Toutes les collections</option>
+                      {library.collections.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label className="filter">
                     <span className="sr-only">Filtrer les systèmes</span>
@@ -183,44 +234,54 @@ export function App() {
                   {results.length} système{results.length > 1 ? "s" : ""}
                 </p>
                 <div className="play-grid">
-                  {results.map((play) => (
-                    <article className="play-card" key={play.id}>
+                  {results.map((p) => (
+                    <article className="play-card" key={p.id}>
                       <div className="card-preview">
-                        <Court miniature />
+                        {p.commonSteps[0] ? (
+                          <PlayDiagram
+                            play={p}
+                            step={p.commonSteps[0]}
+                            miniature
+                          />
+                        ) : (
+                          <Court miniature />
+                        )}
                         <span
-                          className={`card-status ${play.draft ? "draft" : ""}`}
+                          className={`card-status ${p.status !== "imported" ? "draft" : ""}`}
                         >
-                          {play.draft ? "Brouillon" : "Source à migrer"}
+                          {p.status === "draft"
+                            ? "Brouillon"
+                            : p.status === "needs-review"
+                              ? "À confirmer"
+                              : "Importé"}
                         </span>
                         <span className="card-index" aria-hidden="true">
-                          {String(catalog.indexOf(play) + 1).padStart(2, "0")}
+                          {String(library.plays.indexOf(p) + 1).padStart(
+                            2,
+                            "0",
+                          )}
                         </span>
                       </div>
                       <div className="card-body">
-                        <div className="card-category">{play.category}</div>
-                        <h3>{play.name}</h3>
-                        <p>{play.description}</p>
+                        <div className="card-category">
+                          {p.metadata.category}
+                        </div>
+                        <h3>{p.name}</h3>
+                        <p>{p.metadata.description}</p>
                         <div className="card-bottom">
                           <span>
-                            {play.draft
+                            {p.status === "draft"
                               ? "À définir"
-                              : `${play.steps} étapes${play.id === "pin-down-iso" ? " communes" : ""}`}
+                              : `${p.commonSteps.length} étapes${p.branches.length ? " communes" : ""}`}
                           </span>
                           <a
-                            href={href("editor", play)}
-                            aria-label={`Ouvrir ${play.name}`}
+                            href={href("editor", p)}
+                            aria-label={`Ouvrir ${p.name}`}
                           >
-                            Ouvrir{" "}
-                            <span aria-hidden="true">
-                              <Arrow />
-                            </span>
+                            Ouvrir <Arrow />
                           </a>
                         </div>
                       </div>
-                      <span className="sr-only">
-                        Aperçu de terrain générique, sans les mouvements de ce
-                        système.
-                      </span>
                     </article>
                   ))}
                 </div>
@@ -232,6 +293,7 @@ export function App() {
                       onClick={() => {
                         setQuery("");
                         setFilter("Tous les systèmes");
+                        setCollection("all");
                       }}
                     >
                       Réinitialiser la recherche
@@ -245,109 +307,41 @@ export function App() {
               <div className="page-heading workspace-heading">
                 <div>
                   <p className="eyebrow">
-                    {presentation ? "TRANSMETTRE LE JEU" : "DESSINER LE JEU"}
+                    {presentation ? "TRANSMETTRE LE JEU" : "OBSERVER LE JEU"}
                   </p>
-                  <h1>{route.play.name}</h1>
+                  <h1>{play.name}</h1>
                   <p className="muted">
                     {presentation
-                      ? "Un terrain lisible pour toute l’équipe."
-                      : "Un espace pour construire vos prochaines séquences."}
+                      ? "Chaque étape, lisible pour toute l’équipe."
+                      : "Les intentions d’origine, étape par étape."}
                   </p>
                 </div>
                 <a
                   className="button button-primary"
-                  href={href(
-                    presentation ? "editor" : "presentation",
-                    route.play,
-                  )}
+                  href={href(presentation ? "editor" : "presentation", play)}
                 >
-                  {presentation ? "Retour à l’éditeur" : "Présenter"}{" "}
-                  <span aria-hidden="true">
-                    <Arrow />
-                  </span>
+                  {presentation ? "Retour à l’éditeur" : "Présenter"}
+                  <Arrow />
                 </a>
               </div>
-              <div className="notice">
-                <span className="notice-icon" aria-hidden="true">
-                  i
-                </span>
-                <p>
-                  <strong>Terrain de démonstration.</strong> Les positions
-                  affichées sont génériques et ne représentent pas{" "}
-                  {route.play.name}.{" "}
-                  {presentation
-                    ? "La lecture des étapes arrivera après la migration."
-                    : "Les outils de dessin et la sauvegarde ne sont pas encore disponibles."}
-                </p>
-              </div>
-              <section
-                className="court-panel"
-                aria-label={
-                  presentation
-                    ? "Aperçu de présentation"
-                    : "Aperçu de l’éditeur"
+              <PlayViewer
+                key={play.id}
+                play={play}
+                presentation={presentation}
+                court={library.preferences.courtPreview}
+                onCourt={(kind) => {
+                  void updatePreferences(kind);
+                }}
+                saving={
+                  status === "loading" ||
+                  status === "saving" ||
+                  status === "error"
                 }
-              >
-                <div className="court-toolbar">
-                  <div>
-                    <span className="status-dot" />
-                    <strong>
-                      {presentation ? "Présentation" : "Aperçu du terrain"}
-                    </strong>
-                  </div>
-                  <fieldset className="segmented">
-                    <legend className="sr-only">Format du terrain</legend>
-                    <button
-                      aria-pressed={court === "half"}
-                      onClick={() => setCourt("half")}
-                    >
-                      Demi-terrain
-                    </button>
-                    <button
-                      aria-pressed={court === "full"}
-                      onClick={() => setCourt("full")}
-                    >
-                      Terrain entier
-                    </button>
-                  </fieldset>
-                </div>
-                <div
-                  className={`court-stage ${court === "full" ? "full-court" : ""}`}
-                >
-                  <Court kind={court} players />
-                </div>
-                <div className="court-caption">
-                  <span>Disposition de démonstration</span>
-                  <span>{court === "half" ? "15 × 14 m" : "15 × 28 m"}</span>
-                </div>
-              </section>
-              <section
-                className="instruction-panel"
-                aria-labelledby="instruction-heading"
-              >
-                <span className="step-number" aria-hidden="true">
-                  01
-                </span>
-                <div>
-                  <p className="eyebrow">
-                    {presentation ? "INSTRUCTION" : "PROCHAINE ÉTAPE"}
-                  </p>
-                  <h2 id="instruction-heading">
-                    {route.play.draft
-                      ? "Un concept à préciser"
-                      : "Préserver chaque intention de jeu"}
-                  </h2>
-                  <p>
-                    {route.play.draft
-                      ? "Ce brouillon attend sa définition tactique. Aucun déplacement n’a été inventé."
-                      : "La migration reprendra les étapes, les notes et les lectures du système source, sans modifier leur contenu."}
-                  </p>
-                </div>
-              </section>
+              />
             </>
           )}
           <footer className="page-footer">
-            <span>CoachOS</span>
+            <span>CoachOS · OWLS</span>
             <span>Un terrain. Des idées. Votre jeu.</span>
           </footer>
         </main>

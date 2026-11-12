@@ -5,13 +5,15 @@ export default defineConfig({
   fullyParallel: true,
   workers: 2,
   use: {
-    baseURL: "http://127.0.0.1:4173/coachOS-dashboard/",
+    baseURL: "http://127.0.0.1:4174/coachOS-dashboard/",
     launchOptions: { executablePath: process.env.CHROMIUM_PATH },
     screenshot: "only-on-failure",
   },
   projects: [
+    { name: "model-storage", testMatch: /(?:model|storage)\.spec\.ts/ },
     {
       name: "desktop",
+      testIgnore: /(?:model|storage)\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 1000 },
@@ -19,12 +21,13 @@ export default defineConfig({
     },
     {
       name: "mobile",
+      testIgnore: /(?:model|storage)\.spec\.ts/,
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
     },
   ],
   webServer: {
-    command: "npm run preview -- --port 4173",
-    url: "http://127.0.0.1:4173/coachOS-dashboard/",
+    command: "npm run preview -- --port 4174",
+    url: "http://127.0.0.1:4174/coachOS-dashboard/",
     reuseExistingServer: !process.env.CI,
   },
 });
