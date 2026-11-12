@@ -20,6 +20,8 @@ export interface Action {
   status: "recorded" | "optional" | "unassigned" | "confirmed";
   text?: string;
   width?: number;
+  order?: number;
+  durationMs?: number;
   ballBeforeConfirmation?: BallState;
 }
 export interface Step {
@@ -30,6 +32,7 @@ export interface Step {
   afterState: State;
   actions: Action[];
   flags: string[];
+  timing?: { durationMs: number };
 }
 export interface Branch {
   id: string;
@@ -46,7 +49,7 @@ export interface MigrationReport {
 }
 export interface Play {
   id: string;
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   revision: number;
   createdAt: string;
   updatedAt: string;

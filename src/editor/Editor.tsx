@@ -1,3 +1,6 @@
+import { TimingInput } from "./TimingInput";
+import { AnimationPlayer } from "../animation/AnimationPlayer";
+import { compileStep } from "../animation/engine";
 import { useEffect, useRef, useState } from "react";
 import {
   sequence,
@@ -79,6 +82,7 @@ export function Editor({
   const hist = useRef(history);
   const [scope, setScope] = useState(play.branches[0]?.id ?? "common");
   const [stepId, setStepId] = useState(sequence(play, scope)[0]?.id ?? "");
+  const [preview, setPreview] = useState(false);
   const [tool, setTool] = useState<Tool>("select");
   const [selected, setSelected] = useState<Selection>(null);
   const [error, setError] = useState("");
@@ -226,6 +230,19 @@ export function Editor({
         ),
       );
   };
+  if (preview)
+    return (
+      <section className="editor editor-preview">
+        <button className="return-to-edit" onClick={() => setPreview(false)}>
+          Revenir à l’édition
+        </button>
+        <AnimationPlayer
+          play={draft}
+          initialBranch={scope}
+          initialStepId={step?.id}
+        />
+      </section>
+    );
   return (
     <section className="editor" aria-label="Éditeur de système">
       <div className="editor-commandbar">
@@ -263,6 +280,9 @@ export function Editor({
             <option value="full">Terrain entier</option>
           </select>
         </label>
+        <button disabled={!step || loading} onClick={() => setPreview(true)}>
+          Aperçu animé
+        </button>
         <details className="editor-help">
           <summary>Aide</summary>
           <p>
@@ -911,6 +931,128 @@ export function Editor({
                   Le ballon attaché suit son porteur. Une passe optionnelle ne
                   transfère pas la possession.
                 </p>
+              </div>
+            </details>
+            <details className="editor-panel">
+              <summary>Animation · ordre et durée</summary>
+              <div className="panel-body">
+                <label>
+                  Durée de l’étape (s)
+                  <TimingInput
+                    label="Durée de l’étape (secondes)"
+                    min={0.1}
+                    max={30}
+                    value={
+                      step.timing ? step.timing.durationMs / 1000 : undefined
+                    }
+                    placeholder="1,4 par défaut"
+                    onCommit={(value) =>
+                      run(
+                        () =>
+                          commands.changeStep(draft, step.id, (s) => {
+                            if (value !== undefined)
+                              s.timing = {
+                                durationMs: Math.round(value * 1000),
+                              };
+                            else delete s.timing;
+                          }),
+                        `step-duration:${step.id}`,
+                      )
+                    }
+                  />
+                </label>
+                <p>
+                  Validez un champ avec Entrée ou en le quittant. Les actions
+                  d’un même groupe commencent ensemble. Les groupes suivants
+                  attendent la fin du précédent. Une durée d’action explicite
+                  peut allonger l’étape.
+                </p>
+                {step.actions
+                  .filter(
+                    (a) =>
+                      a.kind !== "annotation" &&
+                      a.geometry.kind !== "legacy-screen" &&
+                      (a.kind !== "pass" || a.status === "confirmed"),
+                  )
+                  .map((a) => (
+                    <fieldset className="action-timing" key={a.id}>
+                      <legend>
+                        {actionNames[a.kind]} ·{" "}
+                        {a.actorId
+                          ? `Joueur ${a.actorId}`
+                          : "Acteur à associer"}
+                      </legend>
+                      <label>
+                        Groupe
+                        <TimingInput
+                          label={`Groupe de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                          min={0}
+                          max={99}
+                          integer
+                          value={a.order}
+                          placeholder="0"
+                          onCommit={(value) =>
+                            run(
+                              () =>
+                                commands.editAction(
+                                  draft,
+                                  step.id,
+                                  a.id,
+                                  (action) => {
+                                    if (value !== undefined)
+                                      action.order = value;
+                                    else delete action.order;
+                                  },
+                                ),
+                              `order:${a.id}`,
+                            )
+                          }
+                        />
+                      </label>
+                      <label>
+                        Durée (s)
+                        <TimingInput
+                          label={`Durée de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                          min={0.1}
+                          max={30}
+                          value={a.durationMs ? a.durationMs / 1000 : undefined}
+                          placeholder="Automatique"
+                          onCommit={(value) =>
+                            run(
+                              () =>
+                                commands.editAction(
+                                  draft,
+                                  step.id,
+                                  a.id,
+                                  (action) => {
+                                    if (value !== undefined)
+                                      action.durationMs = Math.round(
+                                        value * 1000,
+                                      );
+                                    else delete action.durationMs;
+                                  },
+                                ),
+                              `action-duration:${a.id}`,
+                            )
+                          }
+                        />
+                      </label>
+                    </fieldset>
+                  ))}
+                <p>
+                  Durée effective :{" "}
+                  {(
+                    compileStep(
+                      step,
+                      draft.court.coordinateSpace === "stack-raw",
+                    ).duration / 1000
+                  ).toFixed(1)}{" "}
+                  s. Les données tactiques d’origine ne fournissent pas de
+                  timings.
+                </p>
+                <button onClick={() => setPreview(true)}>
+                  Lire cette étape
+                </button>
               </div>
             </details>
             <details className="editor-panel">

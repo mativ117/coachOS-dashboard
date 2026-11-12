@@ -72,7 +72,17 @@ function rebase(steps: Step[], initial: State) {
   }
 }
 export function finish(p: Play): Play {
-  p.schemaVersion = 2;
+  p.schemaVersion =
+    p.schemaVersion === 3 ||
+    allSteps(p).some(
+      (s) =>
+        s.timing !== undefined ||
+        s.actions.some(
+          (a) => a.order !== undefined || a.durationMs !== undefined,
+        ),
+    )
+      ? 3
+      : 2;
   p.revision++;
   p.updatedAt = new Date().toISOString();
   p.metadata.originalReport ??= copy(p.metadata.report);
