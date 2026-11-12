@@ -51,7 +51,11 @@ export function point(v: unknown): asserts v is [number, number] {
     fail("coordonnées hors limites");
 }
 function state(v: unknown, allowEmpty = false): asserts v is State {
-  record(v, ["players", "ball"]);
+  record(v, ["players", "ball"], ["defenders"]);
+  if (v.defenders !== undefined) {
+    record(v.defenders, [], ["1", "2", "3", "4", "5"]);
+    Object.values(v.defenders).forEach(point);
+  }
   record(
     v.players,
     allowEmpty &&
@@ -76,24 +80,52 @@ function state(v: unknown, allowEmpty = false): asserts v is State {
   }
 }
 function action(v: unknown): asserts v is Action {
-  record(v, ["id", "kind", "geometry", "status"], ["actorId", "recipientId"]);
+  record(
+    v,
+    ["id", "kind", "geometry", "status"],
+    ["actorId", "recipientId", "text", "width", "ballBeforeConfirmation"],
+  );
   id(v.id);
-  choice(v.kind, ["run", "cut", "pass", "screen"]);
-  choice(v.status, ["recorded", "optional", "unassigned"]);
+  choice(v.kind, ["run", "cut", "pass", "screen", "annotation"]);
+  choice(v.status, ["recorded", "optional", "unassigned", "confirmed"]);
   for (const k of ["actorId", "recipientId"])
     if (v[k] !== undefined) choice(v[k], ["1", "2", "3", "4", "5"]);
   record(v.geometry, ["kind", "points"]);
-  choice(v.geometry.kind, ["line", "catmull-rom", "legacy-screen"]);
+  choice(v.geometry.kind, ["line", "catmull-rom", "legacy-screen", "text"]);
   list(v.geometry.points, 100);
   v.geometry.points.forEach(point);
   const points = v.geometry.points;
   if (
-    v.geometry.kind === "legacy-screen"
-      ? points.length !== 1 || v.kind !== "screen"
+    v.geometry.kind === "legacy-screen" || v.geometry.kind === "text"
+      ? points.length !== 1 ||
+        (v.geometry.kind === "legacy-screen"
+          ? v.kind !== "screen"
+          : v.kind !== "annotation")
       : points.length < 2
   )
     fail("géométrie");
   if (v.geometry.kind === "line" && points.length !== 2) fail("segment");
+  if (v.text !== undefined) text(v.text, 300);
+  if (
+    v.kind === "annotation" &&
+    (v.geometry.kind !== "text" || typeof v.text !== "string")
+  )
+    fail("annotation");
+  if (
+    v.width !== undefined &&
+    (typeof v.width !== "number" ||
+      !Number.isFinite(v.width) ||
+      v.width < 1 ||
+      v.width > 12)
+  )
+    fail("épaisseur");
+  if (v.ballBeforeConfirmation !== undefined) {
+    state({
+      players: { 1: [0, 0], 2: [0, 0], 3: [0, 0], 4: [0, 0], 5: [0, 0] },
+      ball: v.ballBeforeConfirmation,
+    });
+    if (v.status !== "confirmed") fail("possession de confirmation");
+  }
   if (v.kind === "pass" && v.status === "recorded")
     fail("passe sans validation explicite");
 }
@@ -114,6 +146,22 @@ function step(v: unknown): asserts v is Step {
   state(v.afterState);
   list(v.actions, 200);
   v.actions.forEach(action);
+  const confirmed = (v.actions as Action[]).filter(
+    (a) => a.status === "confirmed",
+  );
+  if (confirmed.length > 1) fail("plusieurs passes exécutées");
+  for (const a of confirmed)
+    if (
+      a.kind !== "pass" ||
+      !a.actorId ||
+      !a.recipientId ||
+      a.actorId === a.recipientId ||
+      v.beforeState.ball?.mode !== "attached" ||
+      v.beforeState.ball.carrierId !== a.actorId ||
+      v.afterState.ball?.mode !== "attached" ||
+      v.afterState.ball.carrierId !== a.recipientId
+    )
+      fail("possession de passe exécutée");
   list(v.flags, 30);
   v.flags.forEach((f) => text(f, 300));
 }
@@ -137,6 +185,15 @@ function sameState(a: State, b: State) {
         !b.players[id] ||
         a.players[id][0] !== b.players[id][0] ||
         a.players[id][1] !== b.players[id][1],
+    )
+  )
+    return false;
+  const ad = a.defenders ?? {},
+    bd = b.defenders ?? {};
+  if (
+    Object.keys(ad).length !== Object.keys(bd).length ||
+    Object.keys(ad).some(
+      (id) => !bd[id] || ad[id][0] !== bd[id][0] || ad[id][1] !== bd[id][1],
     )
   )
     return false;
@@ -173,12 +230,12 @@ export function validatePlay(v: unknown): Play {
     "metadata",
   ]);
   id(v.id);
-  choice(v.schemaVersion, [1]);
+  choice(v.schemaVersion, [1, 2]);
   integer(v.revision, 1);
   iso(v.createdAt);
   iso(v.updatedAt);
   text(v.name, 300);
-  choice(v.status, ["imported", "needs-review", "draft"]);
+  choice(v.status, ["imported", "needs-review", "draft", "edited"]);
   record(v.court, ["kind", "coordinateSpace", "dimensionsConfirmed"]);
   choice(v.court.kind, ["half", "full"]);
   choice(v.court.coordinateSpace, ["legacy-750x655", "stack-raw"]);
@@ -204,13 +261,46 @@ export function validatePlay(v: unknown): Play {
     continuity(b.steps as Step[], fork.afterState);
     allSteps.push(...(b.steps as Step[]));
   }
+  if (
+    v.schemaVersion === 1 &&
+    ((v.metadata && Object.hasOwn(v.metadata as object, "originalReport")) ||
+      (v.initialState as State).defenders ||
+      allSteps.some(
+        (s) =>
+          s.beforeState.defenders ||
+          s.afterState.defenders ||
+          s.actions.some(
+            (a) =>
+              a.kind === "annotation" ||
+              a.status === "confirmed" ||
+              a.width !== undefined ||
+              a.text !== undefined ||
+              a.ballBeforeConfirmation !== undefined,
+          ),
+      ))
+  )
+    fail("fonction d’édition nécessitant le schéma 2");
   unique([
     v.id,
     ...v.branches.map((b) => (b as { id: string }).id),
     ...allSteps.map((s) => s.id),
     ...allSteps.flatMap((s) => s.actions.map((a) => a.id)),
   ]);
-  record(v.metadata, ["description", "guidance", "category", "report"]);
+  record(
+    v.metadata,
+    ["description", "guidance", "category", "report"],
+    ["originalReport"],
+  );
+  if (v.metadata.originalReport !== undefined) {
+    const r = v.metadata.originalReport;
+    record(r, ["source", "steps", "branches", "actions", "issues"]);
+    choice(r.source, ["historical", "stack", "draft"]);
+    integer(r.steps);
+    integer(r.branches);
+    integer(r.actions);
+    list(r.issues, 100);
+    r.issues.forEach((s) => text(s, 1000));
+  }
   text(v.metadata.description, 1000);
   text(v.metadata.guidance);
   text(v.metadata.category, 300);

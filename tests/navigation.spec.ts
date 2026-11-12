@@ -48,8 +48,8 @@ test("trois espaces, notes, étapes, sélection et historique", async ({
   );
   await page.getByRole("button", { name: "Suivante →", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Premier écran de 4", exact: true }),
-  ).toBeVisible();
+    page.locator(".timeline-steps [aria-current=step]"),
+  ).toContainText("Premier écran de 4");
   await expect(page.locator('[data-layer="screens"] path')).toHaveCount(1);
   await page.getByRole("link", { name: "Présenter", exact: true }).click();
   await expect(page).toHaveTitle("CoachOS · Présentation");
@@ -67,7 +67,7 @@ test("trois espaces, notes, étapes, sélection et historique", async ({
 test("préférence de gabarit persistée, retour source et aucune largeur débordante", async ({
   page,
 }) => {
-  await page.goto("#/editor?play=stack");
+  await page.goto("#/presentation?play=stack");
   await expect(
     page.getByText("Enregistré sur cet appareil", { exact: false }),
   ).toBeVisible();

@@ -1142,3 +1142,600 @@ button:disabled {
   color: #34577f;
   background: #edf4ff;
 }
+/* Phase 3 : commandes compactes, sans positionnement superposé au terrain. */
+.sidebar {
+  width: 208px;
+  padding: 22px 16px 16px;
+}
+.main-wrap {
+  margin-left: 208px;
+}
+.topbar {
+  min-height: 54px;
+  padding: 12px 26px;
+}
+main {
+  padding: 26px;
+  max-width: 1440px;
+}
+.page-heading {
+  margin-bottom: 18px;
+}
+.page-heading h1 {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+.page-heading .eyebrow {
+  margin-bottom: 8px;
+}
+.notice {
+  padding: 11px 14px;
+  margin-bottom: 22px;
+}
+.storage-line {
+  margin: 0 0 15px;
+}
+.card-preview {
+  height: 125px;
+}
+.card-body {
+  padding: 14px 15px 0;
+}
+.card-body > p {
+  margin-bottom: 13px;
+}
+.play-grid {
+  gap: 17px;
+}
+.page-footer {
+  margin-top: 25px;
+  padding-top: 15px;
+}
+.new-play-button {
+  margin: 0 0 16px;
+}
+.new-play-form {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-bottom: 18px;
+  background: #fff;
+  flex-wrap: wrap;
+}
+.new-play-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.new-play-form input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  max-width: 100%;
+}
+.is-editing main {
+  max-width: 1160px;
+}
+.is-editing .workspace-heading {
+  margin-bottom: 14px;
+}
+.is-editing .workspace-heading .muted,
+.is-editing .workspace-heading .eyebrow {
+  display: none;
+}
+.is-editing .workspace-heading h1 {
+  font-size: 26px;
+  margin: 0;
+}
+.editor {
+  min-width: 0;
+}
+.editor-commandbar {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.undo-group {
+  display: flex;
+  gap: 6px;
+}
+.editor button {
+  font-size: 11px;
+  padding: 8px 12px;
+  min-height: 44px;
+  white-space: normal;
+}
+.editor select,
+.editor input:not([type="checkbox"]),
+.editor textarea {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  color: var(--navy);
+  font: inherit;
+  padding: 8px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  min-height: 44px;
+}
+.editor select {
+  font-size: 11px;
+}
+.court-kind {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  max-width: 240px;
+}
+.editor-help {
+  margin-left: auto;
+  max-width: 360px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.editor-help summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+}
+.editor-help p {
+  margin: 6px 0 12px;
+}
+.drawing-tools {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 7px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 9px;
+}
+.drawing-tools button {
+  flex: 1;
+  min-width: 64px;
+  border: 0;
+  background: #f2f6fc;
+  border-radius: 5px;
+  padding: 7px 8px;
+  white-space: nowrap;
+}
+.drawing-tools button[aria-pressed="true"] {
+  background: #145bc0;
+  color: white;
+}
+.tool-hint,
+.shared-hint {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #4d6689;
+  margin: 8px 2px;
+}
+.shared-hint {
+  color: #735624;
+  padding: 7px 10px;
+  background: #fff8e9;
+  border-radius: 6px;
+}
+.editor-surface {
+  position: relative;
+  background: #eaf1fc;
+  border: 1px solid #d2e0f3;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  touch-action: none;
+  overflow: hidden;
+}
+.editor-surface .play-diagram {
+  width: 100%;
+  height: min(47vh, 460px);
+  min-height: 260px;
+  max-width: none;
+  touch-action: none;
+  user-select: none;
+}
+.editor-surface[data-tool="select"] {
+  cursor: default;
+}
+.editor-surface:not([data-tool="select"]) {
+  cursor: crosshair;
+}
+.cancel-draw {
+  align-self: flex-end;
+  margin-top: 5px;
+}
+.point-handle {
+  fill: white;
+  stroke: #1762c8;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.point-handle.active {
+  fill: #84b6ff;
+}
+.selection-ring {
+  fill: none;
+  stroke: #1762c8;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+.play-defender circle {
+  fill: #fbe7df;
+  stroke: #a74636;
+  stroke-width: 2;
+}
+.play-defender text {
+  fill: #7a2e24;
+  font-weight: 700;
+}
+.court-annotation {
+  fill: #123766;
+  font-weight: 650;
+  paint-order: stroke;
+  stroke: white;
+  stroke-width: 0.6;
+}
+.editor-timeline {
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 9px;
+  margin-top: 10px;
+  padding: 9px;
+}
+.timeline-top {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+.timeline-top label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  font-size: 11px;
+  max-width: calc(100% - 90px);
+}
+.timeline-top select {
+  min-width: 0;
+}
+.timeline-steps {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 9px 1px;
+  max-width: 100%;
+  scrollbar-width: thin;
+}
+.timeline-steps button {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  max-width: 180px;
+  overflow: hidden;
+  min-height: 40px;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.timeline-steps button span {
+  border-radius: 4px;
+  background: #edf4ff;
+  padding: 4px 6px;
+}
+.timeline-steps button.active {
+  border-color: #1762c8;
+  background: #edf4ff;
+}
+.compact-step-controls {
+  margin: 0;
+  gap: 8px;
+}
+.compact-step-controls label {
+  flex: 1;
+  justify-content: center;
+}
+.compact-step-controls select {
+  width: auto;
+  max-width: 100%;
+}
+.editor-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 10px;
+  align-items: start;
+}
+.editor-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 0;
+  font-size: 12px;
+}
+.editor-panel summary {
+  min-height: 44px;
+  cursor: pointer;
+  padding: 13px 12px;
+  font-size: 11px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.panel-body {
+  padding: 0 12px 12px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.panel-body label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11px;
+}
+.panel-body p {
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0;
+  color: #586d87;
+}
+.panel-body form {
+  display: grid;
+  gap: 9px;
+}
+.panel-body .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+}
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+}
+.panel-body .coordinate-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.coordinate-form button {
+  grid-column: 1/-1;
+}
+.editor-error {
+  padding: 10px 13px;
+  color: #84352b;
+  background: #fff0ed;
+  border: 1px solid #e2c1bb;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.danger-button {
+  color: #9a3e31 !important;
+}
+.source-report {
+  margin-top: 9px;
+}
+.editor .draft-placeholder {
+  background: #fff;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 40px 15px;
+}
+.is-presenting .notice {
+  font-size: 11px;
+}
+.is-presenting .court-stage {
+  padding: 12px;
+}
+.is-presenting .court-stage .court-svg {
+  max-height: 60vh;
+}
+.is-presenting .guidance {
+  font-size: 11px;
+}
+.is-presenting .instruction-panel {
+  padding: 15px;
+}
+.is-presenting .instruction-panel p:last-child {
+  margin-top: 6px;
+}
+.storage-error button {
+  margin: 4px 6px 4px 0;
+}
+@media (max-width: 1000px) {
+  .sidebar {
+    width: 180px;
+  }
+  .main-wrap {
+    margin-left: 180px;
+  }
+  .sidebar .brand {
+    font-size: 24px;
+  }
+  .editor-surface .play-diagram {
+    height: 43vh;
+  }
+  .editor-help {
+    max-width: 240px;
+  }
+  .drawing-tools button {
+    flex: 1 0 21%;
+  }
+}
+@media (max-width: 700px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    padding: 10px 14px 8px;
+  }
+  .sidebar nav {
+    margin-top: 7px;
+    gap: 5px;
+  }
+  .sidebar nav a {
+    min-height: 44px;
+  }
+  .main-wrap {
+    margin-left: 0;
+  }
+  .topbar {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+  main {
+    padding: 18px 14px;
+  }
+  .storage-line {
+    margin: 0 0 10px;
+    font-size: 10px;
+  }
+  .page-heading h1 {
+    font-size: 26px;
+  }
+  .page-heading {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .page-heading .button {
+    padding: 9px 12px;
+    min-height: 44px;
+    font-size: 10px;
+  }
+  .notice {
+    padding: 10px 12px;
+    margin-bottom: 17px;
+  }
+  .card-preview {
+    height: 105px;
+  }
+  .play-grid {
+    gap: 10px;
+  }
+  .card-body {
+    padding: 12px 10px 0;
+  }
+  .card-body > p {
+    font-size: 10px;
+    margin-bottom: 10px;
+  }
+  .card-bottom {
+    font-size: 9px;
+  }
+  .is-editing .workspace-heading {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .is-editing .workspace-heading h1 {
+    font-size: 23px;
+    overflow-wrap: anywhere;
+  }
+  .editor-commandbar {
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+  .undo-group {
+    gap: 5px;
+  }
+  .editor-commandbar .court-kind {
+    max-width: none;
+    flex: 1;
+    min-width: 130px;
+  }
+  .editor-commandbar .editor-help {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+  .editor-help summary {
+    padding: 4px 2px;
+    min-height: 32px;
+  }
+  .editor-commandbar button {
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+  .drawing-tools {
+    gap: 4px;
+    padding: 5px;
+  }
+  .drawing-tools button {
+    min-width: 0;
+    flex: 1 0 21%;
+    font-size: 10px;
+    padding: 7px 4px;
+  }
+  .tool-hint,
+  .shared-hint {
+    font-size: 10px;
+    margin: 6px 1px;
+  }
+  .editor-surface {
+    padding: 5px;
+  }
+  .editor-surface .play-diagram {
+    height: 40vh;
+    min-height: 230px;
+  }
+  .editor-panels {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+  .compact-step-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+  .compact-step-controls label {
+    grid-column: 1/-1;
+    order: -1;
+    width: 100%;
+  }
+  .compact-step-controls select {
+    width: 100%;
+  }
+  .compact-step-controls button {
+    width: 100%;
+  }
+  .timeline-top label {
+    max-width: calc(100% - 75px);
+  }
+  .editor-timeline {
+    padding: 7px;
+  }
+  .page-footer {
+    margin-top: 20px;
+  }
+  .is-presenting main {
+    padding-top: 18px;
+  }
+}
+@media (max-width: 370px) {
+  .editor-commandbar .court-kind {
+    flex-basis: 100%;
+  }
+  .is-editing .workspace-heading {
+    flex-wrap: wrap;
+  }
+  .play-grid {
+    grid-template-columns: 1fr;
+  }
+  .timeline-steps button {
+    max-width: 145px;
+  }
+}

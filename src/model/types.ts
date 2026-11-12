@@ -5,15 +5,22 @@ export type BallState =
   | null;
 export interface State {
   players: Record<string, Point>;
+  defenders?: Record<string, Point>;
   ball: BallState;
 }
 export interface Action {
   id: string;
-  kind: "run" | "cut" | "pass" | "screen";
+  kind: "run" | "cut" | "pass" | "screen" | "annotation";
   actorId?: string;
   recipientId?: string;
-  geometry: { kind: "line" | "catmull-rom" | "legacy-screen"; points: Point[] };
-  status: "recorded" | "optional" | "unassigned";
+  geometry: {
+    kind: "line" | "catmull-rom" | "legacy-screen" | "text";
+    points: Point[];
+  };
+  status: "recorded" | "optional" | "unassigned" | "confirmed";
+  text?: string;
+  width?: number;
+  ballBeforeConfirmation?: BallState;
 }
 export interface Step {
   id: string;
@@ -39,12 +46,12 @@ export interface MigrationReport {
 }
 export interface Play {
   id: string;
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   revision: number;
   createdAt: string;
   updatedAt: string;
   name: string;
-  status: "imported" | "needs-review" | "draft";
+  status: "imported" | "needs-review" | "draft" | "edited";
   court: {
     kind: "half" | "full";
     coordinateSpace: "legacy-750x655" | "stack-raw";
@@ -58,6 +65,7 @@ export interface Play {
     guidance: string;
     category: string;
     report: MigrationReport;
+    originalReport?: MigrationReport;
   };
 }
 export interface Library {
@@ -68,6 +76,7 @@ export interface Library {
   preferences: { courtPreview: "half" | "full" };
 }
 export function sequence(play: Play, branchId?: string): Step[] {
+  if (branchId === "common") return play.commonSteps;
   const branch =
     play.branches.find((b) => b.id === branchId) ?? play.branches[0];
   if (!branch) return play.commonSteps;
