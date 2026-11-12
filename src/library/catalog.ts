@@ -1,0 +1,68 @@
+// Inventaire documentaire de phase 0. Aucun mouvement tactique n'est encore migré.
+export const catalog = [
+  {
+    id: "princeton",
+    name: "Princeton",
+    description: "Pass & cut · Backscreen · Pick & roll",
+    steps: 11,
+    category: "Demi-terrain",
+    draft: false,
+  },
+  {
+    id: "pin-down-iso",
+    name: "Pin Down Iso",
+    description: "Pin-down · Mismatch · 4 lectures",
+    steps: 2,
+    category: "Demi-terrain",
+    draft: false,
+  },
+  {
+    id: "pin-down-cut",
+    name: "Pin Down Cut",
+    description: "Pin-down · Backscreen · Pick & roll",
+    steps: 8,
+    category: "Demi-terrain",
+    draft: false,
+  },
+  {
+    id: "stagger-elevator",
+    name: "Stagger Elevator",
+    description: "Stagger · Elevator · Pick & roll",
+    steps: 13,
+    category: "Demi-terrain",
+    draft: false,
+  },
+  {
+    id: "slob",
+    name: "SLOB Stagger Elevator",
+    description: "Remise en jeu · Stagger · Elevator",
+    steps: 10,
+    category: "Remise en jeu",
+    draft: false,
+  },
+  {
+    id: "stack",
+    name: "Stack — Multi-lectures",
+    description: "6 étapes · 24 tracés à associer",
+    steps: 6,
+    category: "Demi-terrain",
+    draft: false,
+  },
+  {
+    id: "baseline",
+    name: "Baseline",
+    description: "Concept à définir avec le coach",
+    steps: 0,
+    category: "Remise en jeu",
+    draft: true,
+  },
+  {
+    id: "losange",
+    name: "Losange",
+    description: "Attaque de zone à définir",
+    steps: 0,
+    category: "Attaque de zone",
+    draft: true,
+  },
+] as const;
+export type CatalogPlay = (typeof catalog)[number];
