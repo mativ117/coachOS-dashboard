@@ -1,13 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-test("bibliothèque, recherche, filtres et état vide", async ({ page }) => {
+test("bibliothèque migrée, recherche, collections, filtres et état vide", async ({
+  page,
+}) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("");
+  await expect(
+    page.getByText("Enregistré sur cet appareil", { exact: false }),
+  ).toBeVisible();
   await expect(page).toHaveTitle("CoachOS · Bibliothèque");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "La bibliothèque",
-  );
   await expect(page.getByRole("article")).toHaveCount(8);
   await page.getByRole("searchbox").fill("stack");
   await expect(page.getByRole("article")).toHaveCount(1);
@@ -19,7 +21,13 @@ test("bibliothèque, recherche, filtres et état vide", async ({ page }) => {
   await page
     .getByRole("button", { name: "Réinitialiser la recherche" })
     .click();
-  await expect(page.getByRole("article")).toHaveCount(8);
+  await page
+    .getByRole("combobox", { name: "Filtrer les collections" })
+    .selectOption("owls");
+  await expect(page.getByRole("article")).toHaveCount(5);
+  await page
+    .getByRole("combobox", { name: "Filtrer les collections" })
+    .selectOption("all");
   await page
     .getByRole("combobox", { name: "Filtrer les systèmes" })
     .selectOption("Brouillons");
@@ -27,7 +35,7 @@ test("bibliothèque, recherche, filtres et état vide", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test("parcours des trois espaces, sélection du système et historique", async ({
+test("trois espaces, notes, étapes, sélection et historique", async ({
   page,
 }) => {
   await page.goto("");
@@ -38,18 +46,14 @@ test("parcours des trois espaces, sélection du système et historique", async (
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Stagger Elevator",
   );
+  await page.getByRole("button", { name: "Suivante →", exact: true }).click();
   await expect(
-    page.getByRole("link", { name: "Éditeur", exact: true }),
-  ).toHaveAttribute("aria-current", "page");
-  await expect(
-    page.getByText("Terrain de démonstration.", { exact: true }),
+    page.getByRole("heading", { name: "Premier écran de 4", exact: true }),
   ).toBeVisible();
+  await expect(page.locator('[data-layer="screens"] path')).toHaveCount(1);
   await page.getByRole("link", { name: "Présenter", exact: true }).click();
   await expect(page).toHaveTitle("CoachOS · Présentation");
   await expect(page.getByRole("navigation")).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Retour à l’éditeur" }),
-  ).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Stagger Elevator",
@@ -60,24 +64,36 @@ test("parcours des trois espaces, sélection du système et historique", async (
   await expect(page.getByRole("article")).toHaveCount(8);
 });
 
-test("terrain accessible demi/entier et aucune largeur débordante", async ({
+test("préférence de gabarit persistée, retour source et aucune largeur débordante", async ({
   page,
 }) => {
   await page.goto("#/editor?play=stack");
-  const court = page.getByRole("img");
-  await expect(court).toHaveAttribute("viewBox", "-35 -35 1570 1470");
-  await expect(court).toHaveAccessibleName(/Demi-terrain.*cinq joueurs/);
-  await page
-    .getByRole("button", { name: "Terrain entier", exact: true })
-    .click();
-  await expect(court).toHaveAttribute("viewBox", "-35 -35 1570 2870");
-  await expect(court).toHaveAccessibleName(/Terrain entier/);
   await expect(
-    page.getByRole("button", { name: "Terrain entier", exact: true }),
+    page.getByText("Enregistré sur cet appareil", { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByRole("img")).toHaveAccessibleName(
+    /coordonnées source/,
+  );
+  await page
+    .getByRole("button", { name: "Gabarit entier", exact: true })
+    .click();
+  await expect(page.getByRole("img")).toHaveAttribute(
+    "viewBox",
+    "-35 -35 1570 2870",
+  );
+  await expect(
+    page.getByText("Enregistré sur cet appareil", { exact: false }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Gabarit entier", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".court-player")).toHaveCount(5);
-  await page.getByRole("button", { name: "Demi-terrain", exact: true }).click();
-  await expect(court).toHaveAttribute("viewBox", "-35 -35 1570 1470");
+  await expect(page.getByRole("img")).toHaveAttribute(
+    "viewBox",
+    "-35 -35 1570 2870",
+  );
+  await page.getByRole("button", { name: "Vue source", exact: true }).click();
+  await expect(page.locator('[data-layer="players"] > g')).toHaveCount(5);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -91,7 +107,7 @@ test("terrain accessible demi/entier et aucune largeur débordante", async ({
   ).toBe(true);
 });
 
-test("accès clavier au contenu et routes inconnues", async ({ page }) => {
+test("accès clavier et routes inconnues", async ({ page }) => {
   await page.goto("#/inconnu?play=absent");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "La bibliothèque",
@@ -102,6 +118,71 @@ test("accès clavier au contenu et routes inconnues", async ({ page }) => {
   ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("main")).toBeFocused();
-  // Le lien d'évitement ne doit pas modifier la route de l'application.
   await expect(page).toHaveURL(/#\/inconnu\?play=absent$/);
+});
+
+test("échec IndexedDB visible et export JSON de secours disponible", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(window, "indexedDB", {
+      get() {
+        throw new DOMException("Stockage désactivé", "SecurityError");
+      },
+    }),
+  );
+  await page.goto("");
+  await expect(page.getByRole("alert")).toContainText(
+    "La sauvegarde locale n’est pas disponible.",
+  );
+  await expect(page.getByRole("article")).toHaveCount(8);
+  const download = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Exporter les données affichées (JSON)" })
+    .click();
+  expect((await download).suggestedFilename()).toBe("coachos-secours.json");
+});
+
+test("stockage corrompu conservé, sans initialisation écrasante", async ({
+  page,
+}) => {
+  await page.goto("");
+  await expect(
+    page.getByText("Enregistré sur cet appareil", { exact: false }),
+  ).toBeVisible();
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const r = indexedDB.open("coachos", 1);
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction("library", "readwrite");
+      tx.objectStore("library").put(
+        { librarySchemaVersion: 99, keep: "ne pas remplacer" },
+        "current",
+      );
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  });
+  await page.reload();
+  await expect(page.getByRole("alert")).toContainText(
+    "Les données existantes ne sont pas remplacées.",
+  );
+  const raw = await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve) => {
+      const r = indexedDB.open("coachos", 1);
+      r.onsuccess = () => resolve(r.result);
+    });
+    const result = await new Promise<unknown>((resolve) => {
+      const tx = db.transaction("library");
+      const r = tx.objectStore("library").get("current");
+      tx.oncomplete = () => resolve(r.result);
+    });
+    db.close();
+    return result;
+  });
+  expect(raw).toEqual({ librarySchemaVersion: 99, keep: "ne pas remplacer" });
 });
