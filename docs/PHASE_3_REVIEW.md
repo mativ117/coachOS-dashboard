@@ -47,4 +47,4 @@ Le terrain entier est maintenant un choix enregistré dans le play édité, et l
 
 Phase 4 : animation, pause/reprise, vitesse, ordre et durée, lecture des branches et présentation dédiée. PDF/PNG, format `.coachos`, restauration et PWA restent aux phases 5–6. Aucun déploiement.
 
-La PR de phase 3 part de la branche de phase 2 ; la fusion de la PR #3 n’a pas été réalisée, car la vérification automatique a demandé une autorisation explicite portant sur cette fusion. La validation fonctionnelle et l’autorisation de fusion sont distinctes. Les changements sont disponibles pour revue avant toute écriture sur `main`.
+Les PR #3 et #4 ont été fusionnées dans `main` après l’autorisation explicite donnée au lancement de la phase 4. La phase 3 reste documentée ici comme référence de validation.

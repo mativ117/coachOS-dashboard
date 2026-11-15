@@ -64,7 +64,7 @@ test("trois espaces, notes, étapes, sélection et historique", async ({
   await expect(page.getByRole("article")).toHaveCount(8);
 });
 
-test("préférence de gabarit persistée, retour source et aucune largeur débordante", async ({
+test("présentation réelle sans outils d’édition ni débordement", async ({
   page,
 }) => {
   await page.goto("#/presentation?play=stack");
@@ -74,26 +74,19 @@ test("préférence de gabarit persistée, retour source et aucune largeur débor
   await expect(page.getByRole("img")).toHaveAccessibleName(
     /coordonnées source/,
   );
-  await page
-    .getByRole("button", { name: "Gabarit entier", exact: true })
-    .click();
-  await expect(page.getByRole("img")).toHaveAttribute(
-    "viewBox",
-    "-35 -35 1570 2870",
-  );
   await expect(
-    page.getByText("Enregistré sur cet appareil", { exact: false }),
+    page.getByRole("toolbar", { name: "Outils de dessin" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Étape statique · à confirmer", { exact: true }),
   ).toBeVisible();
-  await page.reload();
+  await page.getByRole("button", { name: "Suivante →", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Gabarit entier", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("img")).toHaveAttribute(
-    "viewBox",
-    "-35 -35 1570 2870",
-  );
-  await page.getByRole("button", { name: "Vue source", exact: true }).click();
-  await expect(page.locator('[data-layer="players"] > g')).toHaveCount(5);
+    page.getByRole("heading", { name: "Étape 2", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Plein écran", exact: true }),
+  ).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
