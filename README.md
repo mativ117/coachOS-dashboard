@@ -2,7 +2,7 @@
 
 Espace personnel de conception et présentation de systèmes de basket. React, TypeScript strict, Vite ; interface en français et palette claire bleu marine / bleu OWLS.
 
-## État actuel : phase 5
+## État actuel : phase 6 — publication à valider
 
 Bibliothèque, éditeur tactile/PC et présentation animée. Les cinq systèmes historiques et Stack sont migrés ; Pin Down Iso garde ses quatre lectures. Baseline et Losange restent des brouillons jusqu’à leur initialisation volontaire.
 
@@ -22,7 +22,9 @@ Les fichiers `.coachos` transportent un système éditable ; `.coachos-backup` s
 
 PNG haute résolution de l’étape choisie et PDF de plusieurs systèmes, avec toutes leurs lectures, notes paginées, orientation et profil/équipe/logo. Le partage natif est facultatif, avec téléchargement de repli. Les panneaux repliables gardent un format compact. Le profil reste local ; seuls les exports demandés l’incluent.
 
-**À venir :** PWA et publication en phase 6. Aucun compte, service distant ni déploiement automatique.
+PWA installable avec manifest et icônes. Attendre **Disponible hors ligne** avant de couper le réseau : édition, présentation, sauvegarde et modules PDF/PNG sont alors mis en cache. Le panneau donne les instructions iPhone/ordinateur et permet de demander la protection du stockage si le navigateur la propose. Une mise à jour attend la fermeture des onglets, sans rechargement automatique.
+
+Publication GitHub Pages préparée dans un workflow manuel ; aucun déploiement automatique. Voir `docs/DEPLOYMENT.md`. Aucun compte ni service distant. Les essais Safari/iPhone réel et la vérification de l’URL publiée restent à effectuer.
 
 ## Lancer et vérifier
 
@@ -52,6 +54,9 @@ Les tests couvrent modèles, horloge, géométries, transactions via fake-indexe
 - `docs/PHASE_0_AUDIT.md` et `docs/source-snapshot.json` : inventaire et références.
 - `docs/PHASE_1_REVIEW.md` à `docs/PHASE_3_REVIEW.md` : étapes précédentes.
 - `docs/PHASE_4_REVIEW.md` : animation et présentation.
-- `docs/PHASE_5_REVIEW.md` : fichiers, exports, tests, limites et parcours de démo.
+- `docs/PHASE_5_REVIEW.md` : fichiers et exports.
+- `docs/PHASE_6_REVIEW.md` : PWA, qualité et critères restant à vérifier.
+- `docs/DEPLOYMENT.md` : publication et retour arrière.
+- `docs/CAPACITOR.md` : préparation native ultérieure, sans app native livrée.
 
 Ne pas modifier les sources originales, inventer des déplacements ou déployer avant validation explicite.

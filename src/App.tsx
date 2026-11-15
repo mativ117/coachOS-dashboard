@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { OfflineStatus } from "./pwa/OfflineStatus";
 import { Editor } from "./editor/Editor";
 import { createPlay } from "./editor/commands";
 import { Arrow } from "./components/Arrow";
@@ -78,17 +79,11 @@ export function App() {
         className="sidebar"
         aria-label="Navigation principale"
       >
-        <a
-          className="brand"
-          href={href("library")}
-          aria-label="CoachOS — accueil"
-        >
+        <a className="brand" href={href("library")} title="Accueil CoachOS">
           <span className="brand-icon" aria-hidden="true">
             C<span>·</span>
           </span>
-          <span>
-            Coach<span className="brand-light">OS</span>
-          </span>
+          <span>CoachOS</span>
         </a>
         <div className="workspace-label">MON ESPACE COACH</div>
         <nav>
@@ -124,9 +119,10 @@ export function App() {
             Mon espace <span className="breadcrumb-divider">/</span>
             <strong>{labels[route.space]}</strong>
           </span>
-          <span className="phase-badge">Fichiers · Phase 5</span>
+          <span className="phase-badge">CoachOS · PWA</span>
         </header>
         <main inert={atomicBusy} id="main-content" ref={main} tabIndex={-1}>
+          <OfflineStatus />
           <div className="storage-line" role="status">
             {status === "loading"
               ? "Ouverture du stockage local…"
