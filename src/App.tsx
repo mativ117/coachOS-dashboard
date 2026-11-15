@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Editor } from "./editor/Editor";
 import { createPlay } from "./editor/commands";
 import { Arrow } from "./components/Arrow";
-import { Court } from "./components/Court";
-import { PlayDiagram } from "./components/PlayDiagram";
+import { LibraryWorkspace } from "./files/LibraryWorkspace";
 import { PlayViewer } from "./components/PlayViewer";
 import type { Play } from "./model/types";
 import { useLibrary } from "./storage/useLibrary";
@@ -31,13 +30,20 @@ function readRoute() {
 const href = (space: Space, play?: Play) =>
   `#/${space}${play ? `?play=${encodeURIComponent(play.id)}` : ""}`;
 export function App() {
-  const { library, status, error, savePlay, retry, canRetry } = useLibrary();
+  const {
+    library,
+    status,
+    error,
+    savePlay,
+    retry,
+    canRetry,
+    commitLibrary,
+    readRecovery,
+    atomicBusy,
+  } = useLibrary();
   const [newPlay, setNewPlay] = useState(false);
   const [createError, setCreateError] = useState("");
   const [route, setRoute] = useState(readRoute);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("Tous les systèmes");
-  const [collection, setCollection] = useState("all");
   const main = useRef<HTMLElement>(null);
   const play =
     library.plays.find((p) => p.id === route.playId) ?? library.plays[0];
@@ -53,20 +59,6 @@ export function App() {
     document.title = `CoachOS · ${labels[route.space]}`;
   }, [route.space]);
   const presentation = route.space === "presentation";
-  const results = library.plays.filter(
-    (p) =>
-      `${p.name} ${p.metadata.description}`
-        .toLocaleLowerCase("fr")
-        .includes(query.toLocaleLowerCase("fr")) &&
-      (filter === "Tous les systèmes" ||
-        (filter === "Brouillons"
-          ? p.status === "draft"
-          : p.metadata.category === filter)) &&
-      (collection === "all" ||
-        library.collections
-          .find((c) => c.id === collection)
-          ?.playIds.includes(p.id)),
-  );
   return (
     <div
       className={`app ${presentation ? "is-presenting" : route.space === "editor" ? "is-editing" : ""}`}
@@ -81,7 +73,11 @@ export function App() {
       >
         Aller au contenu
       </a>
-      <aside className="sidebar" aria-label="Navigation principale">
+      <aside
+        inert={atomicBusy}
+        className="sidebar"
+        aria-label="Navigation principale"
+      >
         <a
           className="brand"
           href={href("library")}
@@ -128,9 +124,9 @@ export function App() {
             Mon espace <span className="breadcrumb-divider">/</span>
             <strong>{labels[route.space]}</strong>
           </span>
-          <span className="phase-badge">Animation · Phase 4</span>
+          <span className="phase-badge">Fichiers · Phase 5</span>
         </header>
-        <main id="main-content" ref={main} tabIndex={-1}>
+        <main inert={atomicBusy} id="main-content" ref={main} tabIndex={-1}>
           <div className="storage-line" role="status">
             {status === "loading"
               ? "Ouverture du stockage local…"
@@ -225,139 +221,20 @@ export function App() {
                   ; Baseline et Losange attendent leurs premières étapes.
                 </p>
               </div>
-              <section
-                className="library-section"
-                aria-labelledby="systems-heading"
-              >
-                <div className="section-heading">
-                  <h2 id="systems-heading">
-                    Mes systèmes{" "}
-                    <span className="count">{library.plays.length}</span>
-                  </h2>
-                  <span className="section-meta">
-                    {library.plays.filter((p) => p.status !== "draft").length}{" "}
-                    systèmes ·{" "}
-                    {library.plays.filter((p) => p.status === "draft").length}{" "}
-                    brouillons
-                  </span>
-                </div>
-                <div className="filters">
-                  <label className="search">
-                    <span aria-hidden="true">⌕</span>
-                    <span className="sr-only">Rechercher un système</span>
-                    <input
-                      type="search"
-                      placeholder="Rechercher un système…"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                  </label>
-                  <label className="filter">
-                    <span className="sr-only">Filtrer les collections</span>
-                    <select
-                      value={collection}
-                      onChange={(e) => setCollection(e.target.value)}
-                    >
-                      <option value="all">Toutes les collections</option>
-                      {library.collections.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="filter">
-                    <span className="sr-only">Filtrer les systèmes</span>
-                    <select
-                      value={filter}
-                      onChange={(e) => setFilter(e.target.value)}
-                    >
-                      {[
-                        "Tous les systèmes",
-                        "Demi-terrain",
-                        "Remise en jeu",
-                        "Attaque de zone",
-                        "Brouillons",
-                      ].map((v) => (
-                        <option key={v}>{v}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <p role="status" className="sr-only">
-                  {results.length} système{results.length > 1 ? "s" : ""}
-                </p>
-                <div className="play-grid">
-                  {results.map((p) => (
-                    <article className="play-card" key={p.id}>
-                      <div className="card-preview">
-                        {p.commonSteps[0] ? (
-                          <PlayDiagram
-                            play={p}
-                            step={p.commonSteps[0]}
-                            miniature
-                          />
-                        ) : (
-                          <Court miniature />
-                        )}
-                        <span
-                          className={`card-status ${p.status === "draft" || p.status === "needs-review" ? "draft" : ""}`}
-                        >
-                          {p.status === "draft"
-                            ? "Brouillon"
-                            : p.status === "needs-review"
-                              ? "À confirmer"
-                              : p.status === "edited"
-                                ? "Modifié"
-                                : "Importé"}
-                        </span>
-                        <span className="card-index" aria-hidden="true">
-                          {String(library.plays.indexOf(p) + 1).padStart(
-                            2,
-                            "0",
-                          )}
-                        </span>
-                      </div>
-                      <div className="card-body">
-                        <div className="card-category">
-                          {p.metadata.category}
-                        </div>
-                        <h3>{p.name}</h3>
-                        <p>{p.metadata.description}</p>
-                        <div className="card-bottom">
-                          <span>
-                            {p.status === "draft"
-                              ? "À définir"
-                              : `${p.commonSteps.length} étapes${p.branches.length ? " communes" : ""}`}
-                          </span>
-                          <a
-                            href={href("editor", p)}
-                            aria-label={`Ouvrir ${p.name}`}
-                          >
-                            Ouvrir <Arrow />
-                          </a>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-                {results.length === 0 && (
-                  <div className="empty-state">
-                    <h3>Aucun système trouvé</h3>
-                    <p>Essayez un autre nom ou un autre filtre.</p>
-                    <button
-                      onClick={() => {
-                        setQuery("");
-                        setFilter("Tous les systèmes");
-                        setCollection("all");
-                      }}
-                    >
-                      Réinitialiser la recherche
-                    </button>
-                  </div>
-                )}
-              </section>
+              <LibraryWorkspace
+                library={library}
+                status={status}
+                commit={commitLibrary}
+                readRecovery={readRecovery}
+              />
             </>
+          ) : !play ? (
+            <div className="empty-state">
+              <h1>Aucun système disponible</h1>
+              <a className="button" href="#/library">
+                Revenir à la bibliothèque
+              </a>
+            </div>
           ) : (
             <>
               <div className="page-heading workspace-heading">

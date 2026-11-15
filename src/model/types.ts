@@ -71,12 +71,23 @@ export interface Play {
     originalReport?: MigrationReport;
   };
 }
+export interface Profile {
+  coachName: string;
+  team: string;
+  logoDataUrl?: string;
+}
 export interface Library {
-  librarySchemaVersion: 1;
+  librarySchemaVersion: 1 | 2;
   revision: number;
   plays: Play[];
   collections: { id: string; name: string; playIds: string[] }[];
-  preferences: { courtPreview: "half" | "full" };
+  profile?: Profile;
+  preferences: {
+    courtPreview: "half" | "full";
+    exportOrientation?: "auto" | "portrait" | "landscape";
+    includeNotes?: boolean;
+    pngScale?: 2 | 3;
+  };
 }
 export function sequence(play: Play, branchId?: string): Step[] {
   if (branchId === "common") return play.commonSteps;

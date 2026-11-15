@@ -9,6 +9,7 @@ export function useLibrary() {
     "loading" | "saved" | "saving" | "error"
   >("loading");
   const [error, setError] = useState("");
+  const [atomicBusy, setAtomicBusy] = useState(false);
   const repo = useRef<LibraryRepository | null>(null);
   const persisted = useRef(library),
     visible = useRef(library);
@@ -125,7 +126,7 @@ export function useLibrary() {
     enqueue((base) => ({
       ...base,
       revision: base.revision + 1,
-      preferences: { courtPreview },
+      preferences: { ...base.preferences, courtPreview },
     }));
   }
   async function retry() {
@@ -149,7 +150,46 @@ export function useLibrary() {
       setError(e instanceof Error ? e.message : "Stockage indisponible.");
     }
   }
+  async function commitLibrary(
+    candidate: Library,
+    expectedRevision: number,
+    preservePrevious = true,
+  ) {
+    if (
+      pending.current ||
+      blocked.current ||
+      !repo.current ||
+      persisted.current.revision !== expectedRevision
+    )
+      throw new Error(
+        "La bibliothèque a changé ou le stockage n’est pas prêt. Rechargez l’aperçu avant de confirmer.",
+      );
+    pending.current++;
+    setAtomicBusy(true);
+    setStatus("saving");
+    try {
+      const next = { ...candidate, revision: expectedRevision + 1 };
+      await repo.current.save(next, expectedRevision, preservePrevious);
+      persisted.current = next;
+      visible.current = next;
+      setLibrary(next);
+      setStatus("saved");
+    } catch (e) {
+      setStatus("saved");
+      throw e;
+    } finally {
+      pending.current--;
+      setAtomicBusy(false);
+    }
+  }
+  async function readRecovery() {
+    if (!repo.current) throw new Error("Stockage indisponible.");
+    return repo.current.readRecovery();
+  }
   return {
+    commitLibrary,
+    readRecovery,
+    atomicBusy,
     library,
     status,
     error,

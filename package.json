@@ -12,6 +12,7 @@
     "format:check": "prettier --check src tests *.ts *.json index.html"
   },
   "dependencies": {
+    "pdf-lib": "1.17.1",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

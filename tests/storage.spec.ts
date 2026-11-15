@@ -78,3 +78,29 @@ test("quota et modèle invalide : transaction annulée, ancienne bibliothèque i
   expect(await repo.read()).toEqual(initial);
   repo.close();
 });
+
+test("import/restauration atomique : récupération précédente et quota sans mutation partielle", async () => {
+  const repo = await LibraryRepository.open();
+  const original = make();
+  await repo.save(original, null);
+  const next = structuredClone(original);
+  next.revision++;
+  next.plays[0].name = "Version importée";
+  await repo.save(next, original.revision, true);
+  expect(await repo.readRecovery()).toEqual(original);
+  expect(await repo.read()).toEqual(next);
+  const oldPut = IDBObjectStore.prototype.put;
+  IDBObjectStore.prototype.put = function () {
+    throw new DOMException("Quota plein", "QuotaExceededError");
+  };
+  try {
+    await expect(
+      repo.save({ ...next, revision: next.revision + 1 }, next.revision, true),
+    ).rejects.toThrow("Quota plein");
+  } finally {
+    IDBObjectStore.prototype.put = oldPut;
+  }
+  expect(await repo.read()).toEqual(next);
+  expect(await repo.readRecovery()).toEqual(original);
+  repo.close();
+});
