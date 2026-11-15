@@ -27,6 +27,8 @@ Les nouveaux parcours vérifient :
 
 La suite conserve les comparaisons géométriques des 65 vues historiques par format, les invariants Stack, les branches Pin Down Iso, édition/animation, import/conflits, quotas et restauration atomique. Les deux sources et le snapshot de référence restent inchangés.
 
+Manifest final reconnu par Chromium dans un profil standard : aucune erreur de manifest ou d’installabilité ; identité et scope propres à `/coachOS-dashboard/`. Cela ne remplace pas un essai d’installation sur iPhone.
+
 TypeScript strict, format et build vérifiés. Audit npm de toutes les dépendances : zéro vulnérabilité signalée au moment du contrôle. Le contrôle axe est un outil de détection, pas une certification d’accessibilité.
 
 ## Critères et limites de sortie

@@ -44,6 +44,7 @@ test("PWA sous chemin du dépôt : édition, présentation, réouverture et expo
     ).json(),
   );
   expect(manifest.scope).toBe("./");
+  expect(manifest.id).toBe("/coachOS-dashboard/");
   expect(manifest.icons).toHaveLength(2);
   const keys = await page.evaluate(async () => {
     const names = await caches.keys();
