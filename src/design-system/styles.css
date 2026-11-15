@@ -2455,3 +2455,20 @@ main {
 .card-menu:not([open]) > div {
   display: none;
 }
+
+.offline-status {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.offline-status summary {
+  cursor: pointer;
+  padding: 10px 0;
+}
+.offline-status > div {
+  max-width: 760px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}

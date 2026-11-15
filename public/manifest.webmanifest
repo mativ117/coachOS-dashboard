@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "CoachOS · OWLS",
+  "short_name": "CoachOS",
+  "description": "Concevoir et présenter vos systèmes de basket, même hors ligne.",
+  "lang": "fr",
+  "start_url": "./#/library",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f8fd",
+  "theme_color": "#153b70",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
