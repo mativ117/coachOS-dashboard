@@ -1,3 +1,4 @@
+import { validateLogo } from "../files/logo";
 import type { Action, Library, Play, State, Step } from "./types";
 
 function fail(reason: string): never {
@@ -365,14 +366,12 @@ export function parseBoundedJson(raw: string): unknown {
   return v;
 }
 export function validateLibrary(v: unknown): Library {
-  record(v, [
-    "librarySchemaVersion",
-    "revision",
-    "plays",
-    "collections",
-    "preferences",
-  ]);
-  choice(v.librarySchemaVersion, [1]);
+  record(
+    v,
+    ["librarySchemaVersion", "revision", "plays", "collections", "preferences"],
+    ["profile"],
+  );
+  choice(v.librarySchemaVersion, [1, 2]);
   integer(v.revision, 1);
   list(v.plays, 1000);
   const plays = v.plays.map(validatePlay);
@@ -397,7 +396,30 @@ export function validateLibrary(v: unknown): Library {
       fail("référence de collection absente");
   }
   unique(v.collections.map((c) => (c as { id: string }).id));
-  record(v.preferences, ["courtPreview"]);
+  if (v.profile !== undefined) {
+    record(v.profile, ["coachName", "team"], ["logoDataUrl"]);
+    text(v.profile.coachName, 120);
+    text(v.profile.team, 120);
+    if (v.profile.logoDataUrl !== undefined)
+      validateLogo(v.profile.logoDataUrl);
+  }
+  record(
+    v.preferences,
+    ["courtPreview"],
+    ["exportOrientation", "includeNotes", "pngScale"],
+  );
+  if (v.preferences.exportOrientation !== undefined)
+    choice(v.preferences.exportOrientation, ["auto", "portrait", "landscape"]);
+  if (v.preferences.includeNotes !== undefined)
+    choice(v.preferences.includeNotes, [true, false]);
+  if (v.preferences.pngScale !== undefined)
+    choice(v.preferences.pngScale, [2, 3]);
+  if (
+    v.librarySchemaVersion === 1 &&
+    (v.profile !== undefined ||
+      Object.keys(v.preferences).some((k) => k !== "courtPreview"))
+  )
+    fail("paramètres nécessitant la bibliothèque 2");
   choice(v.preferences.courtPreview, ["half", "full"]);
   return v as unknown as Library;
 }

@@ -153,7 +153,7 @@ test("validation : versions inconnues, références cassées, doublons, nombres 
     },
 
     (v: ReturnType<typeof make>) => {
-      v.librarySchemaVersion = 2 as 1;
+      v.librarySchemaVersion = 99 as 1;
     },
     (v: ReturnType<typeof make>) => {
       v.collections[0].playIds.push("absent");

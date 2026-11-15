@@ -2,7 +2,7 @@
 
 Espace personnel de conception et présentation de systèmes de basket. React, TypeScript strict, Vite ; interface en français et palette claire bleu marine / bleu OWLS.
 
-## État actuel : phase 4
+## État actuel : phase 5
 
 Bibliothèque, éditeur tactile/PC et présentation animée. Les cinq systèmes historiques et Stack sont migrés ; Pin Down Iso garde ses quatre lectures. Baseline et Losange restent des brouillons jusqu’à leur initialisation volontaire.
 
@@ -18,7 +18,11 @@ Les données sont enregistrées dans **IndexedDB, sur ce navigateur et cet appar
 
 Les schémas 1 et 2 restent lisibles ; le schéma 3 ajoute les timings facultatifs. Les versions inconnues sont refusées sans remise à zéro. Les deux fichiers sources restent intacts. Le terrain entier est enregistré dans le play et présenté comme tel, sans transformation arbitraire des coordonnées.
 
-**À venir :** `.coachos`, PDF/PNG, import et restauration en phase 5 ; PWA et publication en phase 6. Aucun compte, service distant ni déploiement automatique.
+Les fichiers `.coachos` transportent un système éditable ; `.coachos-backup` sauvegarde toute la bibliothèque, les collections, le profil et les préférences. Chaque import affiche un aperçu : annuler, remplacer ou conserver les deux. Une restauration complète nécessite un choix explicite et garde le précédent état local récupérable. Les copies recâblent leurs identifiants internes.
+
+PNG haute résolution de l’étape choisie et PDF de plusieurs systèmes, avec toutes leurs lectures, notes paginées, orientation et profil/équipe/logo. Le partage natif est facultatif, avec téléchargement de repli. Les panneaux repliables gardent un format compact. Le profil reste local ; seuls les exports demandés l’incluent.
+
+**À venir :** PWA et publication en phase 6. Aucun compte, service distant ni déploiement automatique.
 
 ## Lancer et vérifier
 
@@ -47,6 +51,7 @@ Les tests couvrent modèles, horloge, géométries, transactions via fake-indexe
 - `sources/index_original.html` et `sources/stack_user_v2.json` : originaux intacts.
 - `docs/PHASE_0_AUDIT.md` et `docs/source-snapshot.json` : inventaire et références.
 - `docs/PHASE_1_REVIEW.md` à `docs/PHASE_3_REVIEW.md` : étapes précédentes.
-- `docs/PHASE_4_REVIEW.md` : périmètre livré, tests, limites et parcours de démo.
+- `docs/PHASE_4_REVIEW.md` : animation et présentation.
+- `docs/PHASE_5_REVIEW.md` : fichiers, exports, tests, limites et parcours de démo.
 
 Ne pas modifier les sources originales, inventer des déplacements ou déployer avant validation explicite.

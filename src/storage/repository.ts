@@ -52,6 +52,25 @@ export class LibraryRepository {
       tx.onabort = () => reject(tx.error ?? new Error("Lecture interrompue."));
     });
   }
+  async readRecovery(): Promise<Library | undefined> {
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction("library", "readonly");
+      const req = tx.objectStore("library").get("recovery");
+      tx.oncomplete = () => {
+        try {
+          resolve(
+            req.result === undefined
+              ? undefined
+              : validateLibrary(parseBoundedJson(JSON.stringify(req.result))),
+          );
+        } catch (e) {
+          reject(e);
+        }
+      };
+      tx.onabort = () => reject(tx.error);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
   async read(): Promise<Library | undefined> {
     const raw = await this.readRaw();
     return raw === undefined
@@ -59,7 +78,11 @@ export class LibraryRepository {
       : validateLibrary(parseBoundedJson(JSON.stringify(raw)));
   }
   /** Une transaction unique et un contrôle de révision évitent remplacement partiel et écrasement inter-onglets. */
-  save(library: Library, expectedRevision: number | null): Promise<void> {
+  save(
+    library: Library,
+    expectedRevision: number | null,
+    preservePrevious = false,
+  ): Promise<void> {
     const clean = validateLibrary(parseBoundedJson(JSON.stringify(library)));
     if (
       clean.revision !== (expectedRevision === null ? 1 : expectedRevision + 1)
@@ -89,6 +112,7 @@ export class LibraryRepository {
           return;
         }
         try {
+          if (preservePrevious && current) store.put(current, "recovery");
           store.put(clean, "current");
         } catch (e) {
           failure = e instanceof Error ? e : new Error("Échec de sauvegarde.");
