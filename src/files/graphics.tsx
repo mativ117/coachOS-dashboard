@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PlayDiagram } from "../components/PlayDiagram";
 import type { Library, Play, Step } from "../model/types";
@@ -13,7 +14,7 @@ export function stages(play: Play): ExportStage[] {
   const entries: ExportStage[] = play.commonSteps.map((step, i) => ({
     play,
     step,
-    label: `Tronc commun · Étape ${i + 1}`,
+    label: t("Tronc commun · Étape {0}", i + 1),
     first: i === 0,
   }));
   for (const b of play.branches) {
@@ -22,17 +23,22 @@ export function stages(play: Play): ExportStage[] {
       entries.push({
         play,
         step: b.steps[i],
-        label: `Lecture « ${b.name} » · Étape ${i + 1} · Après l’étape commune ${fork}`,
+        label: t(
+          "Lecture « {0} » · Étape {1} · Après l’étape commune {2}",
+          b.name,
+          i + 1,
+          fork,
+        ),
         first: false,
       });
   }
   return entries.length
     ? entries
-    : [{ play, label: "Brouillon · aucune étape définie", first: true }];
+    : [{ play, label: t("Brouillon · aucune étape définie"), first: true }];
 }
 function context(canvas: HTMLCanvasElement) {
   const c = canvas.getContext("2d");
-  if (!c) throw new Error("Le navigateur ne peut pas préparer les images.");
+  if (!c) throw new Error(t("Le navigateur ne peut pas préparer les images."));
   return c;
 }
 function blob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -201,16 +207,16 @@ async function heading(
     ]);
   blocks.push([
     entry.play.court.coordinateSpace === "stack-raw"
-      ? "Repère source · dimensions à confirmer"
+      ? t("Repère source · dimensions à confirmer")
       : entry.play.court.kind === "full"
-        ? "Terrain entier"
-        : "Demi-terrain",
+        ? t("Terrain entier")
+        : t("Demi-terrain"),
     18,
     400,
   ]);
   if (entry.step?.actions.some((a) => a.status === "confirmed"))
     blocks.push([
-      "Passe confirmée : " +
+      t("Passe confirmée : ") +
         entry.step.actions
           .filter((a) => a.status === "confirmed")
           .map((a) => `${a.actorId} → ${a.recipientId}`)
@@ -260,7 +266,7 @@ export async function exportPng(
   library: Library,
 ): Promise<File> {
   if (!entry.step)
-    throw new Error("Ajoutez une étape avant d’exporter un PNG.");
+    throw new Error(t("Ajoutez une étape avant d’exporter un PNG."));
   const image = await diagram(
     entry.play,
     entry.step,
@@ -272,7 +278,9 @@ export async function exportPng(
   canvas.height = header.height + image.height + 70;
   if (canvas.width * canvas.height > 16_000_000 || canvas.height > 16384)
     throw new Error(
-      "Dessin trop allongé pour un PNG unique. Utilisez le PDF ou rapprochez les éléments.",
+      t(
+        "Dessin trop allongé pour un PNG unique. Utilisez le PDF ou rapprochez les éléments.",
+      ),
     );
   const ctx = context(canvas);
   ctx.fillStyle = "#f5f8fd";
@@ -282,7 +290,7 @@ export async function exportPng(
   ctx.fillStyle = "#34577f";
   ctx.font = `18px ${font}`;
   ctx.fillText(
-    "Bleu : course · Ambre : cut · Pointillés : passe · Barre : écran",
+    t("Bleu : course · Ambre : cut · Pointillés : passe · Barre : écran"),
     24,
     canvas.height - 28,
   );
@@ -311,11 +319,11 @@ export async function exportPdf(
   onProgress?: (completed: number, total: number) => void,
   signal?: AbortSignal,
 ): Promise<File> {
-  if (!plays.length) throw new Error("Sélectionnez au moins un système.");
+  if (!plays.length) throw new Error(t("Sélectionnez au moins un système."));
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
   doc.setTitle(
-    plays.length === 1 ? plays[0].name : "CoachOS — sélection de systèmes",
+    plays.length === 1 ? plays[0].name : t("CoachOS — sélection de systèmes"),
   );
   doc.setCreator("CoachOS");
   const pageFont = await doc.embedFont(StandardFonts.Helvetica);
@@ -355,9 +363,9 @@ export async function exportPdf(
         : (entry.step?.note ?? entry.play.metadata.description);
     if (library.preferences.includeNotes !== false) {
       if (entry.step?.flags.length)
-        note += "\n\nSource — à vérifier :\n" + entry.step.flags.join("\n");
+        note += t("\n\nSource — à vérifier :\n") + entry.step.flags.join("\n");
       if (entry.first && entry.play.metadata.guidance)
-        note += "\n\nConseils du système :\n" + entry.play.metadata.guidance;
+        note += t("\n\nConseils du système :\n") + entry.play.metadata.guidance;
     }
     if (entry.step) {
       const image = await diagram(

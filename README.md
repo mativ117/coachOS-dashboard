@@ -1,8 +1,8 @@
 # CoachOS · OWLS
 
-Espace personnel de conception et présentation de systèmes de basket. React, TypeScript strict, Vite ; interface en français et palette claire bleu marine / bleu OWLS.
+Espace personnel de conception et présentation de systèmes de basket. React, TypeScript strict, Vite ; interface français/anglais et palette claire bleu marine / bleu OWLS.
 
-## État actuel : PWA publiée, éditeur simplifié et dessin nettoyé
+## État actuel : PWA publiée, éditeur simplifié, exports directs et anglais
 
 Bibliothèque, éditeur tactile/PC et présentation animée. Les cinq systèmes historiques et Stack sont migrés ; Pin Down Iso garde ses quatre lectures. Baseline et Losange restent des brouillons jusqu’à leur initialisation volontaire.
 
@@ -20,13 +20,21 @@ Les schémas 1 à 3 restent lisibles ; le schéma 4 ajoute le placement initial 
 
 Les fichiers `.coachos` transportent un système éditable ; `.coachos-backup` sauvegarde toute la bibliothèque, les collections, le profil et les préférences. Chaque import affiche un aperçu : annuler, remplacer ou conserver les deux. Une restauration complète nécessite un choix explicite et garde le précédent état local récupérable. Les copies recâblent leurs identifiants internes.
 
-PNG haute résolution de l’étape choisie et PDF de plusieurs systèmes, avec toutes leurs lectures, notes paginées, orientation et profil/équipe/logo. Le partage natif est facultatif, avec téléchargement de repli. Les panneaux repliables gardent un format compact. Le profil reste local ; seuls les exports demandés l’incluent.
+Le bouton **Exporter**, au-dessus du terrain, dans la présentation et sur chaque carte, propose **Image PNG** de l’étape affichée et **PDF du système** complet. Le fichier est téléchargé ; **Partager le fichier** permet de l’envoyer. Dans la bibliothèque, **Exporter en PDF ou image** permet aussi de regrouper plusieurs systèmes. Les cases de sélection ne sont visibles que dans ce mode. PNG haute résolution de l’étape choisie et PDF de plusieurs systèmes, avec toutes leurs lectures, notes paginées, orientation et profil/équipe/logo. Le partage natif est facultatif, avec téléchargement de repli. Les panneaux repliables gardent un format compact. Le profil reste local ; seuls les exports demandés l’incluent.
 
 PWA installable avec manifest et icônes. Attendre **Disponible hors ligne** avant de couper le réseau : édition, présentation, sauvegarde et modules PDF/PNG sont alors mis en cache. Le panneau donne les instructions iPhone/ordinateur et permet de demander la protection du stockage si le navigateur la propose. Une mise à jour attend la fermeture des onglets, sans rechargement automatique.
 
 PWA publiée : https://mativ117.github.io/coachOS-dashboard/. Le workflow GitHub Pages reste manuel ; aucun déploiement automatique à la fusion. L’éditeur simplifié et le dessin à main levée nettoyé sont publiés. Voir `docs/DEPLOYMENT.md`. Aucun compte ni service distant. Les essais Safari/iPhone réel restent à effectuer.
 
 Le lien **Tuto** ouvre un guide des gestes, avec un terrain d’entraînement indépendant de la bibliothèque. On peut y essayer le déplacement des joueurs et du ballon, puis tracer un mouvement. Le guide reste accessible hors ligne après préparation de la PWA.
+
+Le choix **Français / English** est accessible dans l’en-tête et dans **Réglages** de l’éditeur. Il est mémorisé sur cet appareil, fonctionne hors ligne et traduit l’interface, le tuto et les libellés des exports. Les noms, notes et consignes des systèmes restent dans leur langue d’origine. Voir `docs/EXPORTS_LANGUAGE_REVIEW.md`.
+
+## English quick start
+
+Choose **English** in the top bar, or under **Settings** in the editor. Create a play, place your players and ball, then add a step and draw movements explicitly. To change possession, select the orange ball first, then the receiving player. **Tutorial** includes a practice court that leaves your library untouched.
+
+Use **Export** above the court, in presentation mode or on a play card. **PNG image** exports the current step; **Full play PDF** includes all steps, notes and alternative reads. Files go to your browser’s downloads; **Share file** lets you send them. Choose **Back up library** to keep an editable full backup. Data stays in this browser on this device; it does not sync across devices.
 
 ## Lancer et vérifier
 

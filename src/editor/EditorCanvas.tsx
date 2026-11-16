@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { cleanStroke, strokeKind } from "./cleanStroke";
 import { fittedBox } from "./viewport";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
@@ -495,8 +496,9 @@ export function EditorCanvas({
       className={`board-workspace ${play.court.kind === "full" ? "full-board" : ""}`}
     >
       <p id="board-keyboard" className="sr-only">
-        Au clavier : Tab pour choisir un élément, flèches pour le déplacer, Maj
-        pour un pas plus grand.
+        {t(
+          "Au clavier : Tab pour choisir un élément, flèches pour le déplacer, Maj pour un pas plus grand.",
+        )}
       </p>
       <div className="editor-surface" data-tool={pan ? "pan" : tool}>
         <PlayDiagram
@@ -548,7 +550,10 @@ export function EditorCanvas({
                     data-select-action={a.id}
                     role="button"
                     tabIndex={disabled ? -1 : 0}
-                    aria-label={`Sélectionner le tracé ${step.actions.indexOf(a) + 1}`}
+                    aria-label={t(
+                      "Sélectionner le tracé {0}",
+                      step.actions.indexOf(a) + 1,
+                    )}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
@@ -579,7 +584,7 @@ export function EditorCanvas({
                   fill="transparent"
                   role="button"
                   tabIndex={disabled ? -1 : 0}
-                  aria-label={`Déplacer joueur ${id}`}
+                  aria-label={t("Déplacer joueur {0}", id)}
                   aria-describedby="board-keyboard"
                   onKeyDown={(e) => keyboardMove(e, { kind: "player", id }, p)}
                   className="board-target"
@@ -595,7 +600,7 @@ export function EditorCanvas({
                     fill="transparent"
                     role="button"
                     tabIndex={disabled ? -1 : 0}
-                    aria-label={`Déplacer défenseur ${id}`}
+                    aria-label={t("Déplacer défenseur {0}", id)}
                     aria-describedby="board-keyboard"
                     onKeyDown={(e) =>
                       keyboardMove(e, { kind: "defender", id }, p)
@@ -628,7 +633,7 @@ export function EditorCanvas({
                       fill="transparent"
                       role="button"
                       tabIndex={disabled ? -1 : 0}
-                      aria-label="Déplacer le ballon"
+                      aria-label={t("Déplacer le ballon")}
                       aria-describedby="board-keyboard"
                       className="board-target"
                       onKeyDown={(e) => keyboardMove(e, { kind: "ball" }, p)}
@@ -647,7 +652,7 @@ export function EditorCanvas({
                   r={radius}
                   role="button"
                   tabIndex={disabled ? -1 : 0}
-                  aria-label={`Déplacer le point ${i + 1}`}
+                  aria-label={t("Déplacer le point {0}", i + 1)}
                   onKeyDown={(e) =>
                     keyboardMove(
                       e,
@@ -721,19 +726,21 @@ export function EditorCanvas({
               setActor(undefined);
             }}
           >
-            Annuler le tracé ({pending.length})
+            {t("Annuler le tracé (")}
+            {pending.length}
+            {t(")")}
           </button>
         )}
       </div>
       <details className="board-view-menu" name="board-overlays">
-        <summary>Vue</summary>{" "}
+        <summary>{t("Vue")}</summary>{" "}
         <div
           className="board-view-controls"
           role="group"
-          aria-label="Cadrage du terrain"
+          aria-label={t("Cadrage du terrain")}
         >
           <button
-            aria-label="Vue entière"
+            aria-label={t("Vue entière")}
             onClick={() => {
               setCamera({
                 source: baseBox,
@@ -745,34 +752,36 @@ export function EditorCanvas({
               setPan(false);
             }}
           >
-            Vue entière
+            {t("Vue entière")}
           </button>
           <button
             disabled={view.zoom <= 1}
-            aria-label="Réduire le zoom"
+            aria-label={t("Réduire le zoom")}
             onClick={() =>
               setCamera({ ...view, zoom: Math.max(1, view.zoom - 0.5) })
             }
           >
-            −
+            {t("−")}
           </button>
-          <span aria-live="polite">{Math.round(view.zoom * 100)} %</span>
+          <span aria-live="polite">
+            {Math.round(view.zoom * 100)} {t("%")}
+          </span>
           <button
             disabled={view.zoom >= 3}
-            aria-label="Agrandir le terrain"
+            aria-label={t("Agrandir le terrain")}
             onClick={() =>
               setCamera({ ...view, zoom: Math.min(3, view.zoom + 0.5) })
             }
           >
-            +
+            {t("+")}
           </button>
           {(view.zoom > 1 || pan) && (
             <button aria-pressed={pan} onClick={() => setPan(!pan)}>
-              Déplacer la vue
+              {t("Déplacer la vue")}
             </button>
           )}
           <button
-            aria-label="Recadrer — voir tous les éléments"
+            aria-label={t("Recadrer — voir tous les éléments")}
             onClick={() => {
               setCamera({
                 source: baseBox,
@@ -784,7 +793,7 @@ export function EditorCanvas({
               setPan(false);
             }}
           >
-            Recadrer
+            {t("Recadrer")}
           </button>
         </div>
       </details>

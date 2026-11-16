@@ -83,7 +83,7 @@ test("PWA sous chemin du dépôt : édition, présentation, réouverture et expo
   await page.getByRole("button", { name: "Suivante →", exact: true }).click();
   await page.goto("#/library");
   await page
-    .getByRole("button", { name: "Fichiers et exports", exact: true })
+    .getByRole("button", { name: "Exporter en PDF ou image", exact: true })
     .click();
   let pending = page.waitForEvent("download");
   await page

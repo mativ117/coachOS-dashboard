@@ -1,3 +1,6 @@
+import { LanguagePicker } from "../i18n/LanguagePicker";
+import { t } from "../i18n";
+import { ExportControl } from "../files/ExportControl";
 import { outsideHalf } from "./viewport";
 import { TimingInput } from "./TimingInput";
 import { AnimationPlayer } from "../animation/AnimationPlayer";
@@ -238,46 +241,51 @@ export function Editor({
     return (
       <section className="editor editor-preview">
         <button className="return-to-edit" onClick={() => setPreview(false)}>
-          Revenir à l’édition
+          {t("Revenir à l’édition")}
         </button>
         <AnimationPlayer
           play={draft}
+          library={library}
           initialBranch={scope}
           initialStepId={step?.id}
         />
       </section>
     );
   return (
-    <section className="editor" aria-label="Éditeur de système">
+    <section className="editor" aria-label={t("Éditeur de système")}>
       <div className="editor-commandbar">
         <div className="undo-group">
           <button
             disabled={!history.past.length || loading}
             onClick={() => travel()}
-            title="Ctrl/Cmd Z"
+            title={t("Ctrl/Cmd Z")}
           >
-            ↶ Annuler
+            {t("↶ Annuler")}
           </button>
-          <button
-            disabled={!history.future.length || loading}
-            onClick={() => travel(true)}
-            title="Ctrl/Cmd Maj Z"
-          >
-            ↷ Rétablir
-          </button>
+          {history.future.length > 0 && (
+            <button
+              disabled={loading}
+              onClick={() => travel(true)}
+              title={t("Ctrl/Cmd Maj Z")}
+            >
+              {t("↷ Rétablir")}
+            </button>
+          )}
         </div>
 
         <button disabled={!step || loading} onClick={() => setPreview(true)}>
-          Lire l’étape
+          {t("Lire l’étape")}
         </button>
+        <ExportControl library={library} play={draft} step={step} />
         <details className="editor-settings">
-          <summary>Réglages</summary>
+          <summary>{t("Réglages")}</summary>
+          <LanguagePicker />
           <div className="editor-settings-body">
             {" "}
             <label className="court-kind">
-              Terrain
+              {t("Terrain")}
               <select
-                aria-label="Format du play"
+                aria-label={t("Format du play")}
                 value={draft.court.kind}
                 disabled={
                   draft.court.coordinateSpace === "stack-raw" || loading
@@ -288,7 +296,9 @@ export function Editor({
                     kind === "half" &&
                     outsideHalf(draft) &&
                     !confirm(
-                      "Des éléments de ce système sont hors du demi-terrain. Afficher ce cadre partiel ? Leurs positions seront conservées. Annuler garde le terrain complet.",
+                      t(
+                        "Des éléments de ce système sont hors du demi-terrain. Afficher ce cadre partiel ? Leurs positions seront conservées. Annuler garde le terrain complet.",
+                      ),
                     )
                   )
                     return;
@@ -299,14 +309,14 @@ export function Editor({
                   );
                 }}
               >
-                <option value="half">Demi</option>
-                <option value="full">Complet</option>
+                <option value="half">{t("Demi")}</option>
+                <option value="full">{t("Complet")}</option>
               </select>
             </label>
             {step && (
               <details className="advanced-editor">
                 <summary>
-                  Réglages avancés · lectures, animation et possession
+                  {t("Réglages avancés · lectures, animation et possession")}
                 </summary>
                 <div className="advanced-panels">
                   <button
@@ -328,46 +338,54 @@ export function Editor({
                     }
                   >
                     {Object.keys(step.afterState.defenders ?? {}).length
-                      ? "Retirer les défenseurs"
-                      : "Ajouter 5 défenseurs"}
+                      ? t("Retirer les défenseurs")
+                      : t("Ajouter 5 défenseurs")}
                   </button>
                   {!draft.commonSteps[0]?.purpose && (
                     <details className="editor-panel">
                       <summary>
-                        Ballon · correction des données existantes
+                        {t("Ballon · correction des données existantes")}
                       </summary>
                       <div className="panel-body">
-                        {(["Départ", "Arrivée"] as const).map((label, i) => (
-                          <label key={label}>
-                            {label}
-                            <select
-                              aria-label={`Porteur ${i === 0 ? "au départ" : "à l’arrivée"}`}
-                              value={ballValue(
-                                i === 0
-                                  ? step.beforeState.ball
-                                  : step.afterState.ball,
-                              )}
-                              onChange={(e) =>
-                                run(() =>
-                                  commands.setBall(
-                                    draft,
-                                    step.id,
-                                    ballFrom(e.target.value),
-                                    i === 0,
-                                  ),
-                                )
-                              }
-                            >
-                              <option value="unknown">Non renseigné</option>
-                              <option value="free">Libre</option>
-                              {[1, 2, 3, 4, 5].map((n) => (
-                                <option key={n} value={n}>
-                                  Joueur {n}
+                        {([t("Départ"), t("Arrivée")] as const).map(
+                          (label, i) => (
+                            <label key={label}>
+                              {label}
+                              <select
+                                aria-label={t(
+                                  "Porteur {0}",
+                                  i === 0 ? t("au départ") : t("à l’arrivée"),
+                                )}
+                                value={ballValue(
+                                  i === 0
+                                    ? step.beforeState.ball
+                                    : step.afterState.ball,
+                                )}
+                                onChange={(e) =>
+                                  run(() =>
+                                    commands.setBall(
+                                      draft,
+                                      step.id,
+                                      ballFrom(e.target.value),
+                                      i === 0,
+                                    ),
+                                  )
+                                }
+                              >
+                                <option value="unknown">
+                                  {t("Non renseigné")}
                                 </option>
-                              ))}
-                            </select>
-                          </label>
-                        ))}
+                                <option value="free">{t("Libre")}</option>
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                  <option key={n} value={n}>
+                                    {t("Joueur ")}
+                                    {n}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ),
+                        )}
                         <button
                           disabled={step.afterState.ball?.mode !== "free"}
                           onClick={() => {
@@ -375,22 +393,23 @@ export function Editor({
                             setTool("select");
                           }}
                         >
-                          Déplacer le ballon libre
+                          {t("Déplacer le ballon libre")}
                         </button>
                         <p>
-                          Le ballon attaché suit son porteur. Une passe
-                          optionnelle ne transfère pas la possession.
+                          {t(
+                            "Le ballon attaché suit son porteur. Une passe optionnelle ne transfère pas la possession.",
+                          )}
                         </p>
                       </div>
                     </details>
                   )}
                   <details className="editor-panel">
-                    <summary>Animation · ordre et durée</summary>
+                    <summary>{t("Animation · ordre et durée")}</summary>
                     <div className="panel-body">
                       <label>
-                        Durée de l’étape (s)
+                        {t("Durée de l’étape (s)")}
                         <TimingInput
-                          label="Durée de l’étape (secondes)"
+                          label={t("Durée de l’étape (secondes)")}
                           min={0.1}
                           max={30}
                           value={
@@ -398,7 +417,7 @@ export function Editor({
                               ? step.timing.durationMs / 1000
                               : undefined
                           }
-                          placeholder="1,4 par défaut"
+                          placeholder={t("1,4 par défaut")}
                           onCommit={(value) =>
                             run(
                               () =>
@@ -415,10 +434,9 @@ export function Editor({
                         />
                       </label>
                       <p>
-                        Validez un champ avec Entrée ou en le quittant. Les
-                        actions d’un même groupe commencent ensemble. Les
-                        groupes suivants attendent la fin du précédent. Une
-                        durée d’action explicite peut allonger l’étape.
+                        {t(
+                          "Validez un champ avec Entrée ou en le quittant. Les actions d’un même groupe commencent ensemble. Les groupes suivants attendent la fin du précédent. Une durée d’action explicite peut allonger l’étape.",
+                        )}
                       </p>
                       {step.actions
                         .filter(
@@ -430,15 +448,19 @@ export function Editor({
                         .map((a) => (
                           <fieldset className="action-timing" key={a.id}>
                             <legend>
-                              {actionNames[a.kind]} ·{" "}
+                              {t(actionNames[a.kind])} {t("·")}{" "}
                               {a.actorId
-                                ? `Joueur ${a.actorId}`
-                                : "Acteur à associer"}
+                                ? t("Joueur {0}", a.actorId)
+                                : t("Acteur à associer")}
                             </legend>
                             <label>
-                              Groupe
+                              {t("Groupe")}
                               <TimingInput
-                                label={`Groupe de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                                label={t(
+                                  "Groupe de {0} {1}",
+                                  t(actionNames[a.kind]),
+                                  step.actions.indexOf(a) + 1,
+                                )}
                                 min={0}
                                 max={99}
                                 integer
@@ -463,15 +485,19 @@ export function Editor({
                               />
                             </label>
                             <label>
-                              Durée (s)
+                              {t("Durée (s)")}
                               <TimingInput
-                                label={`Durée de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                                label={t(
+                                  "Durée de {0} {1}",
+                                  t(actionNames[a.kind]),
+                                  step.actions.indexOf(a) + 1,
+                                )}
                                 min={0.1}
                                 max={30}
                                 value={
                                   a.durationMs ? a.durationMs / 1000 : undefined
                                 }
-                                placeholder="Automatique"
+                                placeholder={t("Automatique")}
                                 onCommit={(value) =>
                                   run(
                                     () =>
@@ -495,28 +521,29 @@ export function Editor({
                           </fieldset>
                         ))}
                       <p>
-                        Durée effective :{" "}
+                        {t("Durée effective :")}{" "}
                         {(
                           compileStep(
                             step,
                             draft.court.coordinateSpace === "stack-raw",
                           ).duration / 1000
                         ).toFixed(1)}{" "}
-                        s. Les données tactiques d’origine ne fournissent pas de
-                        timings.
+                        {t(
+                          "s. Les données tactiques d’origine ne fournissent pas de timings.",
+                        )}
                       </p>
                       <button onClick={() => setPreview(true)}>
-                        Lire cette étape
+                        {t("Lire cette étape")}
                       </button>
                     </div>
                   </details>
                   <details className="editor-panel">
-                    <summary>Lectures et système</summary>
+                    <summary>{t("Lectures et système")}</summary>
                     <div className="panel-body">
                       <label>
-                        Nom du système
+                        {t("Nom du système")}
                         <input
-                          aria-label="Nom du système"
+                          aria-label={t("Nom du système")}
                           maxLength={300}
                           value={draft.name}
                           onChange={(e) =>
@@ -552,18 +579,18 @@ export function Editor({
                         }}
                       >
                         <label>
-                          Nouvelle lecture
+                          {t("Nouvelle lecture")}
                           <input
-                            aria-label="Nom de la nouvelle lecture"
+                            aria-label={t("Nom de la nouvelle lecture")}
                             name="name"
                             maxLength={100}
                             required
                           />
                         </label>
                         <label>
-                          Départ après
+                          {t("Départ après")}
                           <select
-                            aria-label="Point de branchement"
+                            aria-label={t("Point de branchement")}
                             name="fork"
                             defaultValue={
                               draft.commonSteps.some((s) => s.id === step.id)
@@ -573,16 +600,19 @@ export function Editor({
                           >
                             {draft.commonSteps.map((s, i) => (
                               <option key={s.id} value={s.id}>
-                                {i + 1}. {s.title}
+                                {i + 1}
+                                {t(". ")}
+                                {s.title}
                               </option>
                             ))}
                           </select>
                         </label>
-                        <button type="submit">Créer la lecture</button>
+                        <button type="submit">{t("Créer la lecture")}</button>
                       </form>
                       <p>
-                        Chaque lecture référence le tronc commun sans le
-                        dupliquer.
+                        {t(
+                          "Chaque lecture référence le tronc commun sans le dupliquer.",
+                        )}
                       </p>
                     </div>
                   </details>
@@ -591,28 +621,27 @@ export function Editor({
             )}{" "}
             {step && (
               <details className="editor-panel source-report">
-                <summary>Source et points à confirmer</summary>
+                <summary>{t("Source et points à confirmer")}</summary>
                 <div className="panel-body">
                   <p>
-                    {report.steps} étapes et {report.actions} actions dans
-                    l’inventaire d’origine.
+                    {report.steps} {t("étapes et ")}
+                    {report.actions} {t("actions dans l’inventaire d’origine.")}
                   </p>
                   {report.issues.map((issue) => (
-                    <p key={issue}>{issue}</p>
+                    <p key={issue}>{t(issue)}</p>
                   ))}
                   {step.flags.map((flag) => (
-                    <p key={flag}>{flag}</p>
+                    <p key={flag}>{t(flag)}</p>
                   ))}
                 </div>
               </details>
             )}{" "}
             <details className="editor-help">
-              <summary>Aide</summary>
+              <summary>{t("Aide")}</summary>
               <p>
-                Vos modifications sont enregistrées automatiquement. Les notes
-                et réglages sont repliables. Ctrl/Cmd Z annule, Ctrl/Cmd Maj Z
-                rétablit. Le glisser-déposer est facultatif : sélectionnez puis
-                appuyez à l’arrivée.
+                {t(
+                  "Vos modifications sont enregistrées automatiquement. Les notes et réglages sont repliables. Ctrl/Cmd Z annule, Ctrl/Cmd Maj Z rétablit. Le glisser-déposer est facultatif : sélectionnez puis appuyez à l’arrivée.",
+                )}
               </p>
               <button
                 onClick={() =>
@@ -624,7 +653,7 @@ export function Editor({
                   })
                 }
               >
-                Copie de secours JSON
+                {t("Copie de secours JSON")}
               </button>
             </details>
           </div>
@@ -632,19 +661,19 @@ export function Editor({
       </div>
       {error && (
         <p className="editor-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
       {!step ? (
         <div className="draft-placeholder">
-          <h2>Construisez votre première étape</h2>
-          <p>Ajoutez les cinq joueurs, puis placez-les à votre façon.</p>
+          <h2>{t("Construisez votre première étape")}</h2>
+          <p>{t("Ajoutez les cinq joueurs, puis placez-les à votre façon.")}</p>
           <button
             className="button-primary"
             disabled={loading}
             onClick={() => run(() => commands.initialize(draft, true))}
           >
-            Initialiser 5 joueurs
+            {t("Initialiser 5 joueurs")}
           </button>
         </div>
       ) : (
@@ -653,9 +682,9 @@ export function Editor({
             <div className="timeline-top">
               {draft.branches.length > 0 && (
                 <label>
-                  Lecture
+                  {t("Lecture")}
                   <select
-                    aria-label="Choisir la lecture"
+                    aria-label={t("Choisir la lecture")}
                     value={
                       draft.branches.some((b) => b.id === scope)
                         ? scope
@@ -667,7 +696,7 @@ export function Editor({
                       setSelected(null);
                     }}
                   >
-                    <option value="common">Tronc commun</option>
+                    <option value="common">{t("Tronc commun")}</option>
                     {draft.branches.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name}
@@ -689,10 +718,10 @@ export function Editor({
                   }
                 }}
               >
-                + Étape
+                {t("+ Étape")}
               </button>
             </div>
-            <div className="timeline-steps" aria-label="Étapes du système">
+            <div className="timeline-steps" aria-label={t("Étapes du système")}>
               {steps.map((s, i) => (
                 <button
                   key={s.id}
@@ -713,43 +742,45 @@ export function Editor({
             <div
               className="drawing-tools"
               role="toolbar"
-              aria-label="Outils de dessin"
+              aria-label={t("Outils de dessin")}
             >
               {tools
                 .filter(
-                  (t) =>
-                    ["select", "run", "pass"].includes(t.id) &&
-                    (!step.purpose || t.id === "select"),
+                  (item) =>
+                    ["select", "run", "pass"].includes(item.id) &&
+                    (!step.purpose || item.id === "select"),
                 )
-                .map((t) => (
+                .map((item) => (
                   <button
-                    key={t.id}
+                    key={item.id}
                     aria-pressed={
-                      tool === t.id ||
-                      (t.id === "run" && tool === "curve") ||
-                      (t.id === "screen" && tool === "screen-curve")
+                      tool === item.id ||
+                      (item.id === "run" && tool === "curve") ||
+                      (item.id === "screen" && tool === "screen-curve")
                     }
                     disabled={loading}
-                    onClick={() => setTool(t.id)}
+                    onClick={() => setTool(item.id)}
                   >
-                    {t.name}
+                    {t(item.name)}
                   </button>
                 ))}
               {!step.purpose && (
                 <details className="more-draw-tools" name="board-overlays">
-                  <summary>Autres</summary>
+                  <summary>{t("Autres")}</summary>
                   <div>
                     {tools
-                      .filter((t) => ["screen", "annotation"].includes(t.id))
-                      .map((t) => (
+                      .filter((item) =>
+                        ["screen", "annotation"].includes(item.id),
+                      )
+                      .map((item) => (
                         <button
-                          key={t.id}
+                          key={item.id}
                           onClick={(e) => {
-                            setTool(t.id);
+                            setTool(item.id);
                             e.currentTarget.closest("details")!.open = false;
                           }}
                         >
-                          {t.name}
+                          {t(item.name)}
                         </button>
                       ))}
                   </div>
@@ -759,28 +790,29 @@ export function Editor({
           )}
           {step.purpose && (
             <p className="setup-hint">
-              Placez les joueurs et le ballon, puis ajoutez une étape pour
-              dessiner.
+              {t(
+                "Placez les joueurs et le ballon, puis ajoutez une étape pour dessiner.",
+              )}
             </p>
           )}
           {!step.purpose && (
             <p className="tool-hint" role="status">
-              {tools.find((t) => t.id === tool)!.hint}
+              {t(tools.find((item) => item.id === tool)!.hint)}
             </p>
           )}
           {draft.commonSteps.some((s) => s.id === step.id) &&
             draft.branches.length > 0 && (
               <p className="shared-hint">
-                Étape commune : les états hérités et les départs des lectures
-                dépendantes seront mis à jour. Les destinations explicites sont
-                conservées.
+                {t(
+                  "Étape commune : les états hérités et les départs des lectures dépendantes seront mis à jour. Les destinations explicites sont conservées.",
+                )}
               </p>
             )}
           {draft.court.coordinateSpace === "stack-raw" && (
             <p className="shared-hint">
-              Stack : repère source sans terrain superposé. Associez
-              explicitement les acteurs dans Sélection ; les dimensions restent
-              à confirmer.
+              {t(
+                "Stack : repère source sans terrain superposé. Associez explicitement les acteurs dans Sélection ; les dimensions restent à confirmer.",
+              )}
             </p>
           )}
           {!step.afterState.ball && (
@@ -798,13 +830,14 @@ export function Editor({
                 )
               }
             >
-              Ajouter le ballon
+              {t("Ajouter le ballon")}
             </button>
           )}
           {draft.court.kind === "half" && outsideHalf(draft) && (
             <p className="shared-hint" role="status">
-              Des éléments sont hors du cadre. « Recadrer » permet de les
-              retrouver.
+              {t(
+                "Des éléments sont hors du cadre. « Recadrer » permet de les retrouver.",
+              )}
             </p>
           )}
           <EditorCanvas
@@ -871,22 +904,22 @@ export function Editor({
                 open={action?.kind === "pass" || tool === "annotation"}
               >
                 <summary>
-                  Sélection
+                  {t("Sélection")}
                   {selected?.kind === "player"
-                    ? ` · Joueur ${selected.id}`
+                    ? t(" · Joueur {0}", selected.id)
                     : selected?.kind === "defender"
-                      ? ` · Défenseur ${selected.id}`
+                      ? t(" · Défenseur {0}", selected.id)
                       : action
-                        ? ` · ${actionNames[action.kind]}`
+                        ? t(" · {0}", t(actionNames[action.kind]))
                         : ""}
                 </summary>
                 <div className="panel-body">
                   {action && (
                     <>
                       <label>
-                        Acteur
+                        {t("Acteur")}
                         <select
-                          aria-label="Acteur du tracé"
+                          aria-label={t("Acteur du tracé")}
                           value={action.actorId ?? ""}
                           onChange={(e) =>
                             run(() =>
@@ -911,10 +944,11 @@ export function Editor({
                             )
                           }
                         >
-                          <option value="">Non associé</option>
+                          <option value="">{t("Non associé")}</option>
                           {[1, 2, 3, 4, 5].map((n) => (
                             <option key={n} value={n}>
-                              Joueur {n}
+                              {t("Joueur ")}
+                              {n}
                             </option>
                           ))}
                         </select>
@@ -922,9 +956,9 @@ export function Editor({
                       {action.kind === "pass" && (
                         <>
                           <label>
-                            Destinataire
+                            {t("Destinataire")}
                             <select
-                              aria-label="Destinataire de la passe"
+                              aria-label={t("Destinataire de la passe")}
                               value={action.recipientId ?? ""}
                               onChange={(e) =>
                                 run(() =>
@@ -946,10 +980,11 @@ export function Editor({
                                 )
                               }
                             >
-                              <option value="">Non associé</option>
+                              <option value="">{t("Non associé")}</option>
                               {[1, 2, 3, 4, 5].map((n) => (
                                 <option key={n} value={n}>
-                                  Joueur {n}
+                                  {t("Joueur ")}
+                                  {n}
                                 </option>
                               ))}
                             </select>
@@ -969,15 +1004,15 @@ export function Editor({
                                 )
                               }
                             />
-                            Exécuter cette passe
+                            {t("Exécuter cette passe")}
                           </label>
                         </>
                       )}
                       {action.kind !== "annotation" && (
                         <label>
-                          Épaisseur
+                          {t("Épaisseur")}
                           <input
-                            aria-label="Épaisseur du tracé"
+                            aria-label={t("Épaisseur du tracé")}
                             type="range"
                             min="1"
                             max="8"
@@ -1007,9 +1042,9 @@ export function Editor({
                       )}
                       {action.kind === "annotation" && (
                         <label>
-                          Texte
+                          {t("Texte")}
                           <input
-                            aria-label="Texte de l’annotation"
+                            aria-label={t("Texte de l’annotation")}
                             maxLength={300}
                             value={action.text ?? ""}
                             onChange={(e) =>
@@ -1042,15 +1077,15 @@ export function Editor({
                           setSelected(null);
                         }}
                       >
-                        Supprimer le tracé
+                        {t("Supprimer le tracé")}
                       </button>
                     </>
                   )}
                   {tool === "annotation" && (
                     <label>
-                      Texte à placer
+                      {t("Texte à placer")}
                       <input
-                        aria-label="Annotation à placer"
+                        aria-label={t("Annotation à placer")}
                         maxLength={300}
                         value={annotation}
                         onChange={(e) => setAnnotation(e.target.value)}
@@ -1061,12 +1096,15 @@ export function Editor({
               </details>
             )}
             <details className="editor-panel">
-              <summary>Notes · {step.title}</summary>
+              <summary>
+                {t("Notes · ")}
+                {step.title}
+              </summary>
               <div className="panel-body">
                 <label>
-                  Titre de l’étape
+                  {t("Titre de l’étape")}
                   <input
-                    aria-label="Titre de l’étape"
+                    aria-label={t("Titre de l’étape")}
                     maxLength={300}
                     value={step.title}
                     onChange={(e) =>
@@ -1081,9 +1119,9 @@ export function Editor({
                   />
                 </label>
                 <label>
-                  Consigne
+                  {t("Consigne")}
                   <textarea
-                    aria-label="Notes de l’étape"
+                    aria-label={t("Notes de l’étape")}
                     rows={3}
                     maxLength={12000}
                     value={step.note}
@@ -1106,13 +1144,15 @@ export function Editor({
                   onClick={() => {
                     if (
                       confirm(
-                        "Supprimer cette étape ? Annuler permet de la rétablir. Les lectures dépendantes seront raccordées à l’étape précédente si possible.",
+                        t(
+                          "Supprimer cette étape ? Annuler permet de la rétablir. Les lectures dépendantes seront raccordées à l’étape précédente si possible.",
+                        ),
                       )
                     )
                       run(() => commands.deleteStep(draft, step.id));
                   }}
                 >
-                  Supprimer l’étape
+                  {t("Supprimer l’étape")}
                 </button>
               </div>
             </details>

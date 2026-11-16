@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import type { Library } from "../model/types";
 import type { Incoming } from "./formats";
@@ -68,20 +69,25 @@ export function ImportDialog({
     >
       <div className="import-dialog-content">
         <h2 id="import-title">
-          {recovery ? "Récupérer l’état précédent" : "Aperçu avant importation"}
+          {recovery
+            ? t("Récupérer l’état précédent")
+            : t("Aperçu avant importation")}
         </h2>
         <p>
-          Aucune donnée n’est modifiée avant confirmation. Un état précédent est
-          conservé lors de l’opération.
+          {t(
+            "Aucune donnée n’est modifiée avant confirmation. Un état précédent est conservé lors de l’opération.",
+          )}
         </p>
         {incoming.legacy && (
-          <p className="notice">Ancien fichier JSON reconnu et validé.</p>
+          <p className="notice">
+            {t("Ancien fichier JSON reconnu et validé.")}
+          </p>
         )}
         {source && (
           <label>
-            Opération
+            {t("Opération")}
             <select
-              aria-label="Mode d’importation"
+              aria-label={t("Mode d’importation")}
               disabled={busy}
               value={mode}
               onChange={(e) => {
@@ -89,8 +95,12 @@ export function ImportDialog({
                 setConfirmed(false);
               }}
             >
-              <option value="merge">Fusionner avec ma bibliothèque</option>
-              <option value="restore">Restaurer toute la bibliothèque</option>
+              <option value="merge">
+                {t("Fusionner avec ma bibliothèque")}
+              </option>
+              <option value="restore">
+                {t("Restaurer toute la bibliothèque")}
+              </option>
             </select>
           </label>
         )}
@@ -98,14 +108,14 @@ export function ImportDialog({
           <div className="restore-summary">
             <p>
               <strong>
-                {base.current.plays.length} systèmes actuels →{" "}
-                {source.plays.length} systèmes du fichier.
+                {base.current.plays.length} {t("systèmes actuels →")}{" "}
+                {source.plays.length} {t("systèmes du fichier.")}
               </strong>
             </p>
             <p>
-              {source.collections.length} collections ; profil :{" "}
-              {source.profile?.team || source.profile?.coachName || "absent"} ;
-              préférences d’export restaurées.
+              {source.collections.length} {t("collections ; profil :")}{" "}
+              {source.profile?.team || source.profile?.coachName || t("absent")}{" "}
+              {t("; préférences d’export restaurées.")}
             </p>
             <p>
               {
@@ -113,8 +123,9 @@ export function ImportDialog({
                   (p) => !source.plays.some((s) => s.id === p.id),
                 ).length
               }{" "}
-              systèmes actuels seront retirés. L’ensemble sera remplaçable par
-              l’état précédent.
+              {t(
+                "systèmes actuels seront retirés. L’ensemble sera remplaçable par l’état précédent.",
+              )}
             </p>
             <label className="checkbox-label">
               <input
@@ -123,7 +134,7 @@ export function ImportDialog({
                 disabled={busy}
                 onChange={(e) => setConfirmed(e.target.checked)}
               />
-              J’ai vérifié l’aperçu : remplacer toute la bibliothèque.
+              {t("J’ai vérifié l’aperçu : remplacer toute la bibliothèque.")}
             </label>
           </div>
         ) : (
@@ -134,39 +145,44 @@ export function ImportDialog({
                   <div>
                     <strong>{row.play.name}</strong>
                     <small>
-                      Fichier : révision {row.play.revision},{" "}
-                      {new Date(row.play.updatedAt).toLocaleDateString("fr")} ·
-                      schéma {row.play.schemaVersion}
+                      {t("Fichier : révision ")}
+                      {row.play.revision}
+                      {t(",")}{" "}
+                      {new Date(row.play.updatedAt).toLocaleDateString(t("fr"))}{" "}
+                      {t("· schéma ")}
+                      {row.play.schemaVersion}
                       {row.existing
-                        ? ` / actuel : révision ${row.existing.revision}`
+                        ? t(" / actuel : révision {0}", row.existing.revision)
                         : ""}
                     </small>
                     <span>
                       {row.status === "new"
-                        ? "Nouveau système"
+                        ? t("Nouveau système")
                         : row.status === "identical"
-                          ? "Déjà identique : aucun remplacement"
-                          : "Conflit à résoudre"}
+                          ? t("Déjà identique : aucun remplacement")
+                          : t("Conflit à résoudre")}
                     </span>
                     {row.internalCollision && (
                       <span>
-                        Identifiants internes déjà utilisés : une copie est
-                        nécessaire.
+                        {t(
+                          "Identifiants internes déjà utilisés : une copie est nécessaire.",
+                        )}
                       </span>
                     )}
                     {row.existing &&
                       row.play.revision < row.existing.revision && (
                         <span>
-                          Attention : la révision du fichier est antérieure à la
-                          version actuelle.
+                          {t(
+                            "Attention : la révision du fichier est antérieure à la version actuelle.",
+                          )}
                         </span>
                       )}
                   </div>
                   {row.status === "conflict" && (
                     <label>
-                      Décision
+                      {t("Décision")}
                       <select
-                        aria-label={`Décision pour ${row.play.name}`}
+                        aria-label={t("Décision pour {0}", row.play.name)}
                         disabled={busy}
                         value={choices[row.play.id] ?? "cancel"}
                         onChange={(e) =>
@@ -177,15 +193,15 @@ export function ImportDialog({
                         }
                       >
                         <option value="cancel">
-                          Annuler / ne pas confirmer
+                          {t("Annuler / ne pas confirmer")}
                         </option>
                         <option
                           value="replace"
                           disabled={row.internalCollision}
                         >
-                          Remplacer
+                          {t("Remplacer")}
                         </option>
-                        <option value="copy">Conserver les deux</option>
+                        <option value="copy">{t("Conserver les deux")}</option>
                       </select>
                     </label>
                   )}
@@ -195,8 +211,10 @@ export function ImportDialog({
             {source && (
               <>
                 <p>
-                  {source.collections.length} collections seront ajoutées ou
-                  complétées par références, sans dupliquer les systèmes.
+                  {source.collections.length}{" "}
+                  {t(
+                    "collections seront ajoutées ou complétées par références, sans dupliquer les systèmes.",
+                  )}
                 </p>
                 <label className="checkbox-label">
                   <input
@@ -205,7 +223,9 @@ export function ImportDialog({
                     disabled={busy}
                     onChange={(e) => setSettings(e.target.checked)}
                   />
-                  Importer aussi le profil présent et les préférences du fichier
+                  {t(
+                    "Importer aussi le profil présent et les préférences du fichier",
+                  )}
                 </label>
               </>
             )}
@@ -213,12 +233,12 @@ export function ImportDialog({
         )}
         {error && (
           <p role="alert" className="editor-error">
-            {error}
+            {t(error)}
           </p>
         )}
         <div className="dialog-actions">
           <button disabled={busy} onClick={onClose}>
-            Annuler
+            {t("Annuler")}
           </button>
           <button
             className="button-primary"
@@ -228,10 +248,10 @@ export function ImportDialog({
             }}
           >
             {busy
-              ? "Enregistrement…"
+              ? t("Enregistrement…")
               : mode === "restore"
-                ? "Restaurer cette sauvegarde"
-                : "Confirmer l’importation"}
+                ? t("Restaurer cette sauvegarde")
+                : t("Confirmer l’importation")}
           </button>
         </div>
       </div>

@@ -1,3 +1,6 @@
+import { t } from "../i18n";
+import { ExportControl } from "./ExportControl";
+import { downloadEmergency } from "../import-export/emergency";
 import { useEffect, useRef, useState } from "react";
 import type { Library, Profile } from "../model/types";
 import { validateLibrary } from "../model/validate";
@@ -152,25 +155,25 @@ export function LibraryWorkspace({
   return (
     <section
       className="library-workspace"
-      aria-label="Bibliothèque et fichiers"
+      aria-label={t("Bibliothèque et fichiers")}
     >
       <div className="library-filebar">
         <button
           onClick={() => setShowFiles((v) => !v)}
           aria-expanded={showFiles}
         >
-          Fichiers et exports
+          {t("Exporter en PDF ou image")}
         </button>
         <button
           disabled={!writable || io.busy}
           onClick={() => fileInput.current?.click()}
         >
-          {reading ? "Lecture du fichier…" : "Importer un fichier"}
+          {reading ? t("Lecture du fichier…") : t("Importer un fichier")}
         </button>
-        <button onClick={io.backup}>Sauvegarder la bibliothèque</button>
+        <button onClick={io.backup}>{t("Sauvegarder la bibliothèque")}</button>
         <input
           ref={fileInput}
-          aria-label="Fichier CoachOS à importer"
+          aria-label={t("Fichier CoachOS à importer")}
           type="file"
           accept=".coachos,.coachos-backup,.json,application/json"
           hidden
@@ -184,13 +187,13 @@ export function LibraryWorkspace({
       {showFiles && (
         <div className="file-panel">
           <div className="export-selection">
-            <strong>PDF</strong>
+            <strong>{t("PDF")}</strong>
             <p>
               {
                 selected.filter((id) => library.plays.some((p) => p.id === id))
                   .length
               }{" "}
-              systèmes sélectionnés sur les cartes.
+              {t("systèmes sélectionnés sur les cartes.")}
             </p>
             <button
               disabled={io.busy || !selected.length}
@@ -201,19 +204,28 @@ export function LibraryWorkspace({
                 );
               }}
             >
-              PDF de la sélection
+              {t("PDF de la sélection")}
+            </button>
+            <button onClick={() => setSelected(filtered.map((p) => p.id))}>
+              {t("Sélectionner les résultats (")}
+              {filtered.length}
+              {t(")")}
             </button>
             <button onClick={() => setSelected(library.plays.map((p) => p.id))}>
-              Tout sélectionner
+              {t("Toute la bibliothèque (")}
+              {library.plays.length}
+              {t(")")}
             </button>
-            <button onClick={() => setSelected([])}>Désélectionner</button>
+            <button onClick={() => setSelected([])}>
+              {t("Désélectionner")}
+            </button>
           </div>
           <div className="png-export">
-            <strong>PNG d’une étape</strong>
+            <strong>{t("PNG d’une étape")}</strong>
             <label>
-              Système
+              {t("Système")}
               <select
-                aria-label="Système à exporter en PNG"
+                aria-label={t("Système à exporter en PNG")}
                 value={chosenPlay?.id ?? ""}
                 onChange={(e) => {
                   setPngPlay(e.target.value);
@@ -228,15 +240,16 @@ export function LibraryWorkspace({
               </select>
             </label>
             <label>
-              Étape
+              {t("Étape")}
               <select
-                aria-label="Étape à exporter en PNG"
+                aria-label={t("Étape à exporter en PNG")}
                 value={chosenStage?.step.id ?? ""}
                 onChange={(e) => setPngStep(e.target.value)}
               >
                 {entries.map((e) => (
                   <option key={e.step.id} value={e.step.id}>
-                    {e.label} · {e.step.title}
+                    {t(e.label)} {t("· ")}
+                    {e.step.title}
                   </option>
                 ))}
               </select>
@@ -247,7 +260,7 @@ export function LibraryWorkspace({
                 if (chosenStage) void io.graphics("png", chosenStage);
               }}
             >
-              Exporter le PNG
+              {t("Exporter le PNG")}
             </button>
           </div>
           <button
@@ -256,62 +269,76 @@ export function LibraryWorkspace({
               void recover();
             }}
           >
-            Récupérer l’état précédent
+            {t("Récupérer l’état précédent")}
           </button>
+          <details>
+            <summary>{t("Données et copie de secours")}</summary>
+            <button onClick={() => downloadEmergency(library)}>
+              {t("Exporter les données affichées (JSON)")}
+            </button>
+            <p>
+              {t(
+                "Pour récupérer les données affichées si une copie habituelle ne suffit pas.",
+              )}
+            </p>
+          </details>
           <p className="file-help">
-            Une copie complète conserve systèmes, collections, profil et
-            préférences. Un fichier .coachos conserve un système éditable. PNG
-            et PDF servent à présenter, pas à rééditer.
+            {t(
+              "Une copie complète conserve systèmes, collections, profil et préférences. Un fichier .coachos conserve un système éditable. PNG et PDF servent à présenter, pas à rééditer.",
+            )}
           </p>
         </div>
       )}
       {io.busy && (
         <div className="file-progress" role="status">
-          {io.progress}
-          <button onClick={io.cancel}>Annuler l’export</button>
+          {t(io.progress)}
+          <button onClick={io.cancel}>{t("Annuler l’export")}</button>
         </div>
       )}
       {io.error && (
         <p className="editor-error" role="alert">
-          {io.error}
+          {t(io.error)}
         </p>
       )}
       {io.message && (
         <p className="file-message" role="status">
-          {io.message}
+          {t(io.message)}
         </p>
       )}
       {io.result && (
         <div className="last-file">
-          <span>Fichier prêt : {io.result.name}</span>
-          <button onClick={io.download}>Télécharger à nouveau</button>
+          <span>
+            {t("Fichier prêt : ")}
+            {io.result.name}
+          </span>
+          <button onClick={io.download}>{t("Télécharger à nouveau")}</button>
           <button
             onClick={() => {
               void io.share();
             }}
           >
-            Partager le fichier
+            {t("Partager le fichier")}
           </button>
         </div>
       )}
       <div className="filters">
         <label className="search">
-          <span aria-hidden="true">⌕</span>
-          <span className="sr-only">Rechercher un système</span>
+          <span aria-hidden="true">{t("⌕")}</span>
+          <span className="sr-only">{t("Rechercher un système")}</span>
           <input
             type="search"
-            placeholder="Rechercher un système…"
+            placeholder={t("Rechercher un système…")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
         <label className="filter">
-          <span className="sr-only">Filtrer les collections</span>
+          <span className="sr-only">{t("Filtrer les collections")}</span>
           <select
             value={collection}
             onChange={(e) => setCollection(e.target.value)}
           >
-            <option value="all">Toutes les collections</option>
+            <option value="all">{t("Toutes les collections")}</option>
             {library.collections.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -320,7 +347,7 @@ export function LibraryWorkspace({
           </select>
         </label>
         <label className="filter">
-          <span className="sr-only">Filtrer les systèmes</span>
+          <span className="sr-only">{t("Filtrer les systèmes")}</span>
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
             {[
               "Tous les systèmes",
@@ -329,19 +356,24 @@ export function LibraryWorkspace({
               "Attaque de zone",
               "Brouillons",
             ].map((v) => (
-              <option key={v}>{v}</option>
+              <option key={v} value={v}>
+                {t(v)}
+              </option>
             ))}
           </select>
         </label>
       </div>
       <div className="section-heading">
         <h2>
-          Mes systèmes <span className="count">{library.plays.length}</span>
+          {t("Mes systèmes ")}
+          <span className="count">{library.plays.length}</span>
         </h2>
-        <span className="section-meta">{filtered.length} affichés</span>
+        <span className="section-meta">
+          {filtered.length} {t("affichés")}
+        </span>
       </div>
       <p className="sr-only" role="status">
-        {filtered.length} systèmes affichés
+        {filtered.length} {t("systèmes affichés")}
       </p>
       <div className="play-grid">
         {filtered.map((p) => (
@@ -356,55 +388,58 @@ export function LibraryWorkspace({
                 className={`card-status ${p.status === "draft" || p.status === "needs-review" ? "draft" : ""}`}
               >
                 {p.status === "draft"
-                  ? "Brouillon"
+                  ? t("Brouillon")
                   : p.status === "needs-review"
-                    ? "À confirmer"
+                    ? t("À confirmer")
                     : p.status === "edited"
-                      ? "Modifié"
-                      : "Importé"}
+                      ? t("Modifié")
+                      : t("Importé")}
               </span>
             </div>
             <div className="card-body">
-              <div className="card-category">{p.metadata.category}</div>
+              <div className="card-category">{t(p.metadata.category)}</div>
               <h3>{p.name}</h3>
               <p>{p.metadata.description}</p>
               <div className="card-bottom">
-                <label className="card-select">
-                  <input
-                    type="checkbox"
-                    aria-label={`Sélectionner ${p.name}`}
-                    checked={selected.includes(p.id)}
-                    onChange={(e) =>
-                      setSelected((s) =>
-                        e.target.checked
-                          ? [...s, p.id]
-                          : s.filter((id) => id !== p.id),
-                      )
-                    }
-                  />
-                  PDF
-                </label>
+                <ExportControl
+                  library={library}
+                  play={p}
+                  step={p.commonSteps[0]}
+                  label={t("Exporter {0}", p.name)}
+                />
+
                 <a
                   href={`#/editor?play=${encodeURIComponent(p.id)}`}
-                  aria-label={`Ouvrir ${p.name}`}
+                  aria-label={t("Ouvrir {0}", p.name)}
                 >
-                  Ouvrir <Arrow />
+                  {t("Ouvrir ")}
+                  <Arrow />
                 </a>
+                {showFiles && (
+                  <label className="card-select">
+                    <input
+                      type="checkbox"
+                      aria-label={t("Sélectionner {0}", p.name)}
+                      checked={selected.includes(p.id)}
+                      onChange={(e) =>
+                        setSelected((s) =>
+                          e.target.checked
+                            ? [...s, p.id]
+                            : s.filter((id) => id !== p.id),
+                        )
+                      }
+                    />
+                    {t("Choisir pour le PDF")}
+                  </label>
+                )}
               </div>
               <details className="card-menu">
-                <summary>Options du système</summary>
+                <summary>{t("Options du système")}</summary>
                 <div>
                   <button onClick={() => io.system(p)}>
-                    Exporter .coachos
+                    {t("Exporter .coachos")}
                   </button>
-                  <button
-                    disabled={io.busy}
-                    onClick={() => {
-                      void io.graphics("pdf", [p]);
-                    }}
-                  >
-                    PDF du système
-                  </button>
+
                   <button
                     disabled={!writable}
                     onClick={() => {
@@ -415,15 +450,15 @@ export function LibraryWorkspace({
                       }
                     }}
                   >
-                    Dupliquer
+                    {t("Dupliquer")}
                   </button>
                   <fieldset>
-                    <legend>Collections</legend>
+                    <legend>{t("Collections")}</legend>
                     {library.collections.map((c) => (
                       <label className="checkbox-label" key={c.id}>
                         <input
                           type="checkbox"
-                          aria-label={`${p.name} dans ${c.name}`}
+                          aria-label={t("{0} dans {1}", p.name, c.name)}
                           checked={c.playIds.includes(p.id)}
                           disabled={!writable}
                           onChange={(e) => {
@@ -457,8 +492,8 @@ export function LibraryWorkspace({
       </div>
       {!filtered.length && (
         <div className="empty-state">
-          <h3>Aucun système trouvé</h3>
-          <p>Créez un système ou ajustez les filtres.</p>
+          <h3>{t("Aucun système trouvé")}</h3>
+          <p>{t("Créez un système ou ajustez les filtres.")}</p>
           <button
             onClick={() => {
               setQuery("");
@@ -466,13 +501,13 @@ export function LibraryWorkspace({
               setCollection("all");
             }}
           >
-            Réinitialiser la recherche
+            {t("Réinitialiser la recherche")}
           </button>
         </div>
       )}
       <div className="library-settings-grid">
         <details className="editor-panel">
-          <summary>Gérer les collections</summary>
+          <summary>{t("Gérer les collections")}</summary>
           <div className="panel-body">
             <form
               onSubmit={(e) => {
@@ -493,16 +528,16 @@ export function LibraryWorkspace({
               }}
             >
               <label>
-                Nouvelle collection
+                {t("Nouvelle collection")}
                 <input
-                  aria-label="Nom de la collection"
+                  aria-label={t("Nom de la collection")}
                   value={newCollection}
                   maxLength={120}
                   onChange={(e) => setNewCollection(e.target.value)}
                   required
                 />
               </label>
-              <button disabled={!writable}>Créer la collection</button>
+              <button disabled={!writable}>{t("Créer la collection")}</button>
             </form>
             {library.collections.map((c) => (
               <form
@@ -522,10 +557,11 @@ export function LibraryWorkspace({
                 }}
               >
                 <label>
-                  Renommer {c.name}
+                  {t("Renommer ")}
+                  {c.name}
                   <input
                     name="name"
-                    aria-label={`Nom de ${c.name}`}
+                    aria-label={t("Nom de {0}", c.name)}
                     maxLength={120}
                     defaultValue={c.name}
                     key={c.name}
@@ -533,7 +569,7 @@ export function LibraryWorkspace({
                   />
                 </label>
                 <div className="inline-actions">
-                  <button disabled={!writable}>Renommer</button>
+                  <button disabled={!writable}>{t("Renommer")}</button>
                   <button
                     type="button"
                     className="danger-button"
@@ -541,7 +577,10 @@ export function LibraryWorkspace({
                     onClick={() => {
                       if (
                         confirm(
-                          `Supprimer la collection « ${c.name} » ? Ses systèmes sont conservés.`,
+                          t(
+                            "Supprimer la collection « {0} » ? Ses systèmes sont conservés.",
+                            c.name,
+                          ),
                         )
                       ) {
                         void operation(
@@ -557,7 +596,7 @@ export function LibraryWorkspace({
                       }
                     }}
                   >
-                    Supprimer la collection
+                    {t("Supprimer la collection")}
                   </button>
                 </div>
               </form>
@@ -565,7 +604,7 @@ export function LibraryWorkspace({
           </div>
         </details>
         <details className="editor-panel">
-          <summary>Profil et préférences d’export</summary>
+          <summary>{t("Profil et préférences d’export")}</summary>
           <form
             className="panel-body"
             onSubmit={(e) => {
@@ -584,9 +623,9 @@ export function LibraryWorkspace({
             }}
           >
             <label>
-              Nom du coach
+              {t("Nom du coach")}
               <input
-                aria-label="Nom du coach"
+                aria-label={t("Nom du coach")}
                 maxLength={120}
                 value={profile.coachName}
                 onChange={(e) =>
@@ -595,9 +634,9 @@ export function LibraryWorkspace({
               />
             </label>
             <label>
-              Équipe
+              {t("Équipe")}
               <input
-                aria-label="Équipe"
+                aria-label={t("Équipe")}
                 maxLength={120}
                 value={profile.team}
                 onChange={(e) =>
@@ -606,9 +645,9 @@ export function LibraryWorkspace({
               />
             </label>
             <label>
-              Logo PNG ou JPEG
+              {t("Logo PNG ou JPEG")}
               <input
-                aria-label="Logo de l’équipe"
+                aria-label={t("Logo de l’équipe")}
                 type="file"
                 accept="image/png,image/jpeg"
                 onChange={async (e) => {
@@ -630,7 +669,7 @@ export function LibraryWorkspace({
             </label>
             {profile.logoDataUrl && (
               <div className="profile-logo">
-                <img src={profile.logoDataUrl} alt="Logo de l’équipe" />
+                <img src={profile.logoDataUrl} alt={t("Logo de l’équipe")} />
                 <button
                   type="button"
                   onClick={() =>
@@ -641,22 +680,22 @@ export function LibraryWorkspace({
                     })
                   }
                 >
-                  Retirer le logo
+                  {t("Retirer le logo")}
                 </button>
               </div>
             )}
             <label>
-              Orientation PDF
+              {t("Orientation PDF")}
               <select
-                aria-label="Orientation PDF"
+                aria-label={t("Orientation PDF")}
                 value={orientation}
                 onChange={(e) =>
                   setOrientation(e.target.value as typeof orientation)
                 }
               >
-                <option value="auto">Automatique</option>
-                <option value="portrait">Portrait</option>
-                <option value="landscape">Paysage</option>
+                <option value="auto">{t("Automatique")}</option>
+                <option value="portrait">{t("Portrait")}</option>
+                <option value="landscape">{t("Paysage")}</option>
               </select>
             </label>
             <label className="checkbox-label">
@@ -665,23 +704,26 @@ export function LibraryWorkspace({
                 checked={includeNotes}
                 onChange={(e) => setIncludeNotes(e.target.checked)}
               />
-              Inclure les notes dans le PDF
+              {t("Inclure les notes dans le PDF")}
             </label>
             <label>
-              Résolution PNG
+              {t("Résolution PNG")}
               <select
-                aria-label="Résolution PNG"
+                aria-label={t("Résolution PNG")}
                 value={pngScale}
                 onChange={(e) => setPngScale(Number(e.target.value) as 2 | 3)}
               >
-                <option value="2">Haute définition</option>
-                <option value="3">Très haute définition</option>
+                <option value="2">{t("Haute définition")}</option>
+                <option value="3">{t("Très haute définition")}</option>
               </select>
             </label>
-            <button disabled={!writable}>Enregistrer les paramètres</button>
+            <button disabled={!writable}>
+              {t("Enregistrer les paramètres")}
+            </button>
             <p>
-              Profil facultatif et local. Le logo est normalisé en PNG ; aucun
-              SVG actif ou lien distant n’est accepté.
+              {t(
+                "Profil facultatif et local. Le logo est normalisé en PNG ; aucun SVG actif ou lien distant n’est accepté.",
+              )}
             </p>
           </form>
         </details>

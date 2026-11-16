@@ -184,7 +184,7 @@ test("sauvegarde complète, aperçu de restauration et récupération de l’ét
   await expect(page.getByRole("article")).toHaveCount(1);
   expect((await db(page)).profile?.coachName).toBe("Restauré");
   await page
-    .getByRole("button", { name: "Fichiers et exports", exact: true })
+    .getByRole("button", { name: "Exporter en PDF ou image", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Récupérer l’état précédent", exact: true })
@@ -304,7 +304,7 @@ test("PNG réel avec écran T et PDF multi-plays avec branches et notes paginée
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await ready(page);
   await page
-    .getByRole("button", { name: "Fichiers et exports", exact: true })
+    .getByRole("button", { name: "Exporter en PDF ou image", exact: true })
     .click();
   await page
     .getByRole("combobox", { name: "Système à exporter en PNG" })
@@ -414,7 +414,7 @@ test("panneaux fichiers et réglages compacts sans chevauchement à 320–1440 p
   await page.goto("");
   await ready(page);
   await page
-    .getByRole("button", { name: "Fichiers et exports", exact: true })
+    .getByRole("button", { name: "Exporter en PDF ou image", exact: true })
     .click();
   await page
     .locator(".library-workspace details")
