@@ -1,3 +1,4 @@
+import { Tutorial } from "./tutorial/Tutorial";
 import { useEffect, useRef, useState } from "react";
 import { OfflineStatus } from "./pwa/OfflineStatus";
 import { Editor } from "./editor/Editor";
@@ -9,11 +10,12 @@ import type { Play } from "./model/types";
 import { useLibrary } from "./storage/useLibrary";
 import { downloadEmergency } from "./import-export/emergency";
 
-type Space = "library" | "editor" | "presentation";
+type Space = "library" | "editor" | "presentation" | "tutorial";
 const labels: Record<Space, string> = {
   library: "Bibliothèque",
   editor: "Éditeur",
   presentation: "Présentation",
+  tutorial: "Tuto",
 };
 function readRoute() {
   const [path, query = ""] = location.hash.slice(1).split("?");
@@ -22,14 +24,38 @@ function readRoute() {
       ? "editor"
       : path === "/presentation"
         ? "presentation"
-        : "library";
+        : path === "/tutorial"
+          ? "tutorial"
+          : "library";
   return {
     space,
     playId: new URLSearchParams(query).get("play") ?? "princeton",
   };
 }
-const href = (space: Space, play?: Play) =>
-  `#/${space}${play ? `?play=${encodeURIComponent(play.id)}` : ""}`;
+const href = (space: Space, play?: Play) => {
+  const query = new URLSearchParams();
+  if (play) query.set("play", play.id);
+  if (space === "tutorial") {
+    const [path, current = ""] = location.hash.slice(1).split("?");
+    query.set("from", path === "/editor" ? "editor" : "library");
+    if (path === "/editor")
+      for (const key of ["step", "branch"]) {
+        const value = new URLSearchParams(current).get(key);
+        if (value) query.set(key, value);
+      }
+  }
+  return `#/${space}${query.size ? `?${query}` : ""}`;
+};
+function tutorialReturn(play?: Play) {
+  const params = new URLSearchParams(location.hash.split("?")[1]);
+  if (params.get("from") !== "editor" || !play) return "#/library";
+  const query = new URLSearchParams({ play: play.id });
+  for (const key of ["step", "branch"]) {
+    const value = params.get(key);
+    if (value) query.set(key, value);
+  }
+  return `#/editor?${query}`;
+}
 export function App() {
   const {
     library,
@@ -91,10 +117,17 @@ export function App() {
             <a
               key={space}
               href={href(space, play)}
+              onClick={
+                space === "tutorial"
+                  ? (e) => {
+                      e.currentTarget.href = href(space, play);
+                    }
+                  : undefined
+              }
               aria-current={space === route.space ? "page" : undefined}
             >
               <span className="nav-symbol" aria-hidden="true">
-                {["▦", "⌁", "▷"][i]}
+                {["▦", "⌁", "▷", "?"][i]}
               </span>
               {labels[space]}
             </a>
@@ -156,7 +189,9 @@ export function App() {
               )}
             </div>
           )}
-          {route.space === "library" ? (
+          {route.space === "tutorial" ? (
+            <Tutorial returnHref={tutorialReturn(play)} />
+          ) : route.space === "library" ? (
             <>
               <div className="page-heading">
                 <div>

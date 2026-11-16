@@ -2715,3 +2715,160 @@ main {
 .editor-settings-body > .editor-help {
   max-width: none;
 }
+
+.tutorial-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.tutorial-heading {
+  margin: 18px 0 24px;
+}
+.tutorial-heading > p:not(.eyebrow) {
+  color: #586d87;
+  line-height: 1.6;
+}
+.tutorial-heading .button {
+  margin-top: 8px;
+}
+.tutorial-shortcuts,
+.practice-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 24px;
+}
+.tutorial-shortcuts button,
+.practice-tools button {
+  min-height: 44px;
+  padding: 10px 14px;
+}
+.tutorial-card {
+  background: #fff;
+  border: 1px solid #d9e3f0;
+  border-radius: 14px;
+  padding: 24px;
+  margin: 16px 0;
+  scroll-margin-top: 24px;
+}
+.tutorial-card h2 {
+  font-size: 21px;
+  letter-spacing: -0.3px;
+  margin: 12px 0;
+}
+.tutorial-card p,
+.tutorial-card li,
+.tutorial-tools dd,
+.tutorial-practice > p {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #435b79;
+}
+.tutorial-number {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 34px;
+  height: 34px;
+  background: #e6effd;
+  color: #123766;
+  border-radius: 10px;
+  font-weight: 750;
+}
+.ball-number {
+  background: #fff1db;
+  color: #83500e;
+}
+.tutorial-steps {
+  padding-left: 24px;
+}
+.tutorial-steps li {
+  padding: 4px 0 4px 4px;
+}
+.tutorial-tip {
+  border-left: 3px solid #1762c8;
+  background: #f0f5ff;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+}
+.tutorial-tools {
+  margin: 0;
+}
+.tutorial-tools > div {
+  padding: 14px 0;
+  border-bottom: 1px solid #e7edf5;
+}
+.tutorial-tools dt {
+  font-size: 15px;
+  font-weight: 700;
+  color: #123766;
+}
+.tutorial-tools dd {
+  margin: 7px 0 0;
+}
+.tutorial-card details,
+.tutorial-extra,
+.tutorial-exercise {
+  margin-top: 16px;
+}
+.tutorial-card summary,
+.tutorial-exercise > summary {
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.tutorial-exercise {
+  border: 1px solid #b8cff2;
+  border-radius: 14px;
+  background: #edf4ff;
+  padding: 8px 22px;
+}
+.tutorial-practice {
+  margin: 12px 0;
+}
+.tutorial-practice .board-workspace {
+  max-width: 750px;
+  margin: auto;
+}
+.practice-tools button[aria-pressed="true"] {
+  color: #fff;
+  background: #1762c8;
+  border-color: #1762c8;
+}
+.practice-message {
+  min-height: 48px;
+}
+.tutorial-return {
+  margin: 8px 0 24px;
+}
+@media (max-width: 700px) {
+  .sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .sidebar nav a {
+    min-width: 0;
+    justify-content: center;
+    padding: 10px 3px;
+    font-size: 10px;
+    gap: 0;
+  }
+  .sidebar nav a .nav-symbol {
+    display: none;
+  }
+  .tutorial-card {
+    padding: 18px;
+  }
+  .tutorial-card h2 {
+    font-size: 19px;
+  }
+  .tutorial-heading h1 {
+    font-size: 28px;
+  }
+  .tutorial-exercise {
+    padding: 8px 16px;
+  }
+}

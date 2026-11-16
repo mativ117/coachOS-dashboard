@@ -26,6 +26,8 @@ PWA installable avec manifest et icônes. Attendre **Disponible hors ligne** ava
 
 PWA publiée : https://mativ117.github.io/coachOS-dashboard/. Le workflow GitHub Pages reste manuel ; aucun déploiement automatique à la fusion. L’éditeur simplifié et le dessin à main levée nettoyé sont publiés. Voir `docs/DEPLOYMENT.md`. Aucun compte ni service distant. Les essais Safari/iPhone réel restent à effectuer.
 
+Le lien **Tuto** ouvre un guide des gestes, avec un terrain d’entraînement indépendant de la bibliothèque. On peut y essayer le déplacement des joueurs et du ballon, puis tracer un mouvement. Le guide reste accessible hors ligne après préparation de la PWA.
+
 ## Lancer et vérifier
 
 Node.js 22.12+ (Node 24 recommandé) et npm.
@@ -58,6 +60,7 @@ Les tests couvrent modèles, horloge, géométries, transactions via fake-indexe
 - `docs/PHASE_6_REVIEW.md` : PWA et qualité.
 - `docs/BOARD_EDITOR_REVIEW.md` : éditeur simplifié, terrain et compatibilité.
 - `docs/AUDIT_FOLLOWUP.md` : suivi des propositions restantes de l’audit.
+- `docs/TUTORIAL_REVIEW.md` : guide et terrain d’entraînement sans modification des systèmes.
 - `docs/DEPLOYMENT.md` : publication et retour arrière.
 - `docs/CAPACITOR.md` : préparation native ultérieure, sans app native livrée.
 
