@@ -644,4 +644,87 @@ export default {
   "Partage ouvert.": "Sharing opened.",
   "Image trop volumineuse pour ce navigateur.":
     "This image is too large for your browser.",
+  "Date de fichier invalide.": "Invalid file date.",
+  "Fichier CoachOS attendu.": "Please choose a CoachOS file.",
+  "Version de sauvegarde inconnue.": "Unknown backup version.",
+  "Format non reconnu. Choisissez un fichier .coachos ou une sauvegarde CoachOS.":
+    "Unrecognized format. Choose a .coachos file or a CoachOS backup.",
+  "Fichier trop volumineux : maximum 4 Mo.":
+    "This file is too large: maximum 4 MB.",
+  "Fichier illisible.": "Unable to read this file.",
+  "Stockage indisponible.": "Storage unavailable.",
+  "Choisissez Remplacer ou Conserver les deux, ou annulez l’import.":
+    "Choose Replace or Keep both, or cancel the import.",
+  "Logo JPEG invalide.": "Invalid JPEG logo.",
+  "Logo illisible.": "Unable to read the logo.",
+  "Logo PNG incomplet.": "Incomplete PNG logo.",
+  "Le logo doit faire moins de 512 Ko.":
+    "The logo must be smaller than 512 KB.",
+  "Le logo doit mesurer au plus 2048 × 2048 pixels.":
+    "The logo must be no larger than 2048 × 2048 pixels.",
+  "Images indisponibles.": "Images unavailable.",
+  "Données CoachOS invalides : objet attendu.":
+    "Invalid CoachOS data: expected an object.",
+  "Données CoachOS invalides : champs inattendus ou manquants.":
+    "Invalid CoachOS data: unexpected or missing fields.",
+  "Données CoachOS invalides : liste hors limites.":
+    "Invalid CoachOS data: list exceeds limits.",
+  "Données CoachOS invalides : texte hors limites.":
+    "Invalid CoachOS data: text exceeds limits.",
+  "Données CoachOS invalides : entier hors limites.":
+    "Invalid CoachOS data: number outside limits.",
+  "Données CoachOS invalides : valeur inconnue.":
+    "Invalid CoachOS data: unknown value.",
+  "Données CoachOS invalides : identifiant.":
+    "Invalid CoachOS data: invalid identifier.",
+  "Données CoachOS invalides : coordonnées hors limites.":
+    "Invalid CoachOS data: coordinates outside limits.",
+  "Données CoachOS invalides : ballon.": "Invalid CoachOS data: invalid ball.",
+  "Données CoachOS invalides : géométrie.":
+    "Invalid CoachOS data: invalid geometry.",
+  "Données CoachOS invalides : segment.":
+    "Invalid CoachOS data: invalid line segment.",
+  "Données CoachOS invalides : annotation.":
+    "Invalid CoachOS data: invalid note.",
+  "Données CoachOS invalides : épaisseur.":
+    "Invalid CoachOS data: invalid thickness.",
+  "Données CoachOS invalides : possession de confirmation.":
+    "Invalid CoachOS data: invalid confirmed possession.",
+  "Données CoachOS invalides : passe sans validation explicite.":
+    "Invalid CoachOS data: pass requires explicit confirmation.",
+  "Données CoachOS invalides : plusieurs passes exécutées.":
+    "Invalid CoachOS data: multiple executed passes.",
+  "Données CoachOS invalides : possession de passe exécutée.":
+    "Invalid CoachOS data: executed pass possession mismatch.",
+  "Données CoachOS invalides : identifiants dupliqués.":
+    "Invalid CoachOS data: duplicate identifiers.",
+  "Données CoachOS invalides : date.": "Invalid CoachOS data: invalid date.",
+  "Données CoachOS invalides : état de départ incohérent.":
+    "Invalid CoachOS data: inconsistent starting state.",
+  "Données CoachOS invalides : dimensions Stack non confirmées.":
+    "Invalid CoachOS data: Stack dimensions are unconfirmed.",
+  "Données CoachOS invalides : point de branchement absent.":
+    "Invalid CoachOS data: missing branch point.",
+  "Données CoachOS invalides : fonction d’édition nécessitant le schéma 2.":
+    "Invalid CoachOS data: this editing feature requires schema 2.",
+  "Données CoachOS invalides : timing nécessitant le schéma 3.":
+    "Invalid CoachOS data: timing requires schema 3.",
+  "Données CoachOS invalides : tracé angulaire nécessitant le schéma 4.":
+    "Invalid CoachOS data: angular paths require schema 4.",
+  "Données CoachOS invalides : placement initial invalide ou schéma 4 requis.":
+    "Invalid CoachOS data: invalid setup or schema 4 required.",
+  "Données CoachOS invalides : rapport incohérent.":
+    "Invalid CoachOS data: inconsistent report.",
+  "Données CoachOS invalides : fichier trop volumineux.":
+    "Invalid CoachOS data: file too large.",
+  "Données CoachOS invalides : JSON illisible.":
+    "Invalid CoachOS data: unreadable JSON.",
+  "Données CoachOS invalides : structure trop complexe.":
+    "Invalid CoachOS data: structure too complex.",
+  "Données CoachOS invalides : clé interdite.":
+    "Invalid CoachOS data: forbidden key.",
+  "Données CoachOS invalides : référence de collection absente.":
+    "Invalid CoachOS data: missing collection reference.",
+  "Données CoachOS invalides : paramètres nécessitant la bibliothèque 2.":
+    "Invalid CoachOS data: settings require library schema 2.",
 };

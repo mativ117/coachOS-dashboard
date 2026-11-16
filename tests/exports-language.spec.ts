@@ -47,6 +47,17 @@ test("anglais persistant, tuto et filtres utilisables sans modifier les système
   await page
     .getByRole("combobox", { name: "Filter plays", exact: true })
     .selectOption({ label: "All plays" });
+  await page
+    .getByLabel("CoachOS file to import", { exact: true })
+    .setInputFiles({
+      name: "invalid.coachos",
+      mimeType: "application/json",
+      buffer: Buffer.from("{"),
+    });
+  await expect(page.getByRole("alert")).toContainText(
+    "Invalid CoachOS data: unreadable JSON.",
+  );
+  expect(await library(page)).toEqual(before);
   await page.getByRole("link", { name: "Tutorial", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Get started with CoachOS" }),

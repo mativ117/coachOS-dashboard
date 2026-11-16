@@ -531,7 +531,7 @@ export function EditorCanvas({
             ref: svg,
             role: "group",
             "aria-labelledby": undefined,
-            "aria-label": "Terrain interactif",
+            "aria-label": t("Terrain interactif"),
             onKeyDown: (e) => {
               if (e.key === "Escape") {
                 setPending([]);

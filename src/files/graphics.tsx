@@ -195,7 +195,7 @@ async function heading(
       27,
       600,
     ],
-    [entry.label, 21, 500],
+    [t(entry.label), 21, 500],
   ];
   if (library.profile?.coachName || library.profile?.team)
     blocks.push([
