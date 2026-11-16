@@ -16,9 +16,7 @@ async function create(page: Page, name: string) {
   await page
     .getByRole("button", { name: "Créer le système", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Initialiser 5 joueurs", exact: true })
-    .click();
+  await page.getByRole("button", { name: "+ Étape", exact: true }).click();
   await ready(page);
 }
 async function point(page: Page, x: number, y: number, touch = false) {
@@ -56,23 +54,38 @@ async function readPlay(page: Page) {
 
 test("courbe réglable, notes, undo/redo et rechargement fidèle", async ({
   page,
-}, info) => {
+}) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await create(page, "Courbe complète");
-  await page.getByRole("button", { name: "Courbe", exact: true }).click();
-  const touch = info.project.name === "mobile";
-  await point(page, 375, 440, touch);
-  await point(page, 300, 300, touch);
-  await point(page, 200, 180, touch);
+  await page.getByRole("button", { name: "Tracer", exact: true }).click();
+  await stroke(page, [
+    [375, 440],
+    [300, 300],
+    [200, 180],
+  ]);
+  await page
+    .getByRole("button", { name: "Sélectionner le tracé 1", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
   await expect(page.locator('[data-layer="paths"] > g')).toHaveCount(1);
-  await page
-    .getByRole("spinbutton", { name: "Position X", exact: true })
-    .fill("250");
-  await page
-    .getByRole("spinbutton", { name: "Position Y", exact: true })
-    .fill("280");
-  await page.getByRole("button", { name: "Appliquer la position" }).click();
+  const svg = page.locator(".editor-surface > svg");
+  await svg.scrollIntoViewIfNeeded();
+  const xy = await svg.evaluate((el) =>
+    [
+      [300, 300],
+      [250, 280],
+    ].map(([x, y]) => {
+      const p = new DOMPoint(x, y).matrixTransform(
+        (el as SVGSVGElement).getScreenCTM()!,
+      );
+      return { x: p.x, y: p.y };
+    }),
+  );
+  await page.mouse.move(xy[0].x, xy[0].y);
+  await page.mouse.down();
+  await page.mouse.move(xy[1].x, xy[1].y, { steps: 5 });
+  await page.mouse.up();
   await page
     .locator(".editor-panel summary")
     .filter({ hasText: /^Notes/ })
@@ -90,7 +103,7 @@ test("courbe réglable, notes, undo/redo et rechargement fidèle", async ({
   ).toHaveValue("Passe puis coupe : garder le timing.");
   await ready(page);
   const stored = await readPlay(page);
-  expect(stored.commonSteps[0].actions[0].geometry.points[1]).toEqual([
+  expect(stored.commonSteps[1].actions[0].geometry.points[1]).toEqual([
     250, 280,
   ]);
   await page.reload();
@@ -102,8 +115,8 @@ test("courbe réglable, notes, undo/redo et rechargement fidèle", async ({
   await expect(
     page.getByRole("textbox", { name: "Notes de l’étape" }),
   ).toHaveValue("Passe puis coupe : garder le timing.");
-  expect((await readPlay(page)).commonSteps[0].actions).toEqual(
-    stored.commonSteps[0].actions,
+  expect((await readPlay(page)).commonSteps[1].actions).toEqual(
+    stored.commonSteps[1].actions,
   );
   expect(errors).toEqual([]);
 });
@@ -112,52 +125,43 @@ test("passe optionnelle/validée, écran courbe en T et ballon libre", async ({
   page,
 }) => {
   await create(page, "Passe et écran");
-  await page
-    .locator(".editor-panel summary")
-    .filter({ hasText: /^Ballon$/ })
-    .click();
-  await page
-    .getByRole("combobox", { name: "Porteur au départ", exact: true })
-    .selectOption("1");
   await page.getByRole("button", { name: "Passe", exact: true }).click();
   await point(page, 375, 440);
   await point(page, 650, 110);
   await ready(page);
-  expect((await readPlay(page)).commonSteps[0].afterState.ball).toEqual({
+  expect((await readPlay(page)).commonSteps[1].afterState.ball).toEqual({
     mode: "attached",
     carrierId: "1",
   });
   await page.getByRole("checkbox", { name: "Exécuter cette passe" }).check();
   await ready(page);
-  expect((await readPlay(page)).commonSteps[0].afterState.ball).toEqual({
+  expect((await readPlay(page)).commonSteps[1].afterState.ball).toEqual({
     mode: "attached",
     carrierId: "2",
   });
-  await page.getByRole("button", { name: "Écran courbe", exact: true }).click();
-  await point(page, 100, 110);
-  await point(page, 160, 220);
-  await point(page, 240, 260);
+  await page.locator(".more-draw-tools > summary").click();
+  await page.getByRole("button", { name: "Écran", exact: true }).click();
+  await stroke(page, [
+    [100, 110],
+    [160, 220],
+    [240, 260],
+  ]);
   await expect(
     page.locator('[data-layer="paths"] > g').nth(1).locator("path"),
   ).toHaveCount(2);
   await page.getByRole("button", { name: "+ Étape", exact: true }).click();
-  await page
-    .getByRole("combobox", { name: "Porteur à l’arrivée", exact: true })
-    .selectOption("free");
-  await page.getByRole("button", { name: "Déplacer le ballon libre" }).click();
+  await point(page, 672, 124);
   await point(page, 500, 450);
   await ready(page);
   const p = await readPlay(page);
-  expect(p.commonSteps[1].afterState.ball).toEqual({
+  expect(p.commonSteps[2].afterState.ball).toEqual({
     mode: "free",
     position: [500, 450],
   });
-  expect(p.commonSteps[0].actions[1].geometry.kind).toBe("catmull-rom");
+  expect(p.commonSteps[1].actions[1].geometry.kind).toBe("catmull-rom");
   await page.reload();
   await ready(page);
-  await page
-    .getByRole("combobox", { name: "Choisir l’étape" })
-    .selectOption("1");
+  await page.locator(".timeline-steps button").nth(2).click();
   await expect(page.locator('[data-layer="ball"] circle')).toHaveAttribute(
     "cx",
     "500",
@@ -171,6 +175,8 @@ test("placement par appuis, défenseurs, lecture et terrain entier persistés", 
   const touch = info.project.name === "mobile";
   await point(page, 375, 440, touch);
   await point(page, 330, 390, touch);
+  await page.locator(".editor-settings > summary").click();
+  await page.locator(".advanced-editor > summary").click();
   await page
     .getByRole("button", { name: "Ajouter 5 défenseurs", exact: true })
     .click();
@@ -190,7 +196,7 @@ test("placement par appuis, défenseurs, lecture et terrain entier persistés", 
     .selectOption("full");
   await ready(page);
   let p = await readPlay(page);
-  expect(p.commonSteps[0].afterState.players["1"]).toEqual([330, 390]);
+  expect(p.commonSteps[1].afterState.players["1"]).toEqual([330, 390]);
   expect(p.branches).toHaveLength(1);
   expect(p.court.kind).toBe("full");
   await page.reload();
@@ -212,12 +218,9 @@ test("format compact sans chevauchement à 320, 390, 768 et 1440 pixels", async 
   await page.goto("#/editor?play=princeton");
   await ready(page);
   await page
-    .locator(".editor-panel summary")
-    .filter({ hasText: /^Sélection/ })
-    .click();
-  await page
-    .getByRole("combobox", { name: "Élément sélectionné" })
-    .selectOption("p:1");
+    .getByRole("button", { name: "Déplacer joueur 1", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page
@@ -275,7 +278,7 @@ test("saisie rapide, glisser-déposer et annotation conservés sans exécution H
   await page
     .getByRole("textbox", { name: "Notes de l’étape" })
     .pressSequentially(note, { delay: 0 });
-  await page.getByRole("button", { name: "Sélection", exact: true }).click();
+  await page.getByRole("button", { name: "Déplacer", exact: true }).click();
   const svg = page.locator(".editor-surface > svg");
   await svg.scrollIntoViewIfNeeded();
   const coords = await svg.evaluate((el) => {
@@ -292,14 +295,15 @@ test("saisie rapide, glisser-déposer et annotation conservés sans exécution H
   await page.mouse.down();
   await page.mouse.move(coords[1].x, coords[1].y, { steps: 6 });
   await page.mouse.up();
+  await page.locator(".more-draw-tools > summary").click();
   await page.getByRole("button", { name: "Annotation", exact: true }).click();
   const text = "<script>window.injected=true</script>";
   await page.getByRole("textbox", { name: "Annotation à placer" }).fill(text);
   await point(page, 200, 500);
   await ready(page);
   const p = await readPlay(page);
-  expect(p.commonSteps[0].note).toBe(note);
-  expect(p.commonSteps[0].afterState.players["1"]).toEqual([290, 390]);
+  expect(p.commonSteps[1].note).toBe(note);
+  expect(p.commonSteps[1].afterState.players["1"]).toEqual([290, 390]);
   await expect(page.locator('[data-layer="annotations"] text')).toHaveText(
     text,
   );
@@ -308,7 +312,7 @@ test("saisie rapide, glisser-déposer et annotation conservés sans exécution H
   );
   await page.reload();
   await ready(page);
-  expect((await readPlay(page)).commonSteps[0].note).toBe(note);
+  expect((await readPlay(page)).commonSteps[1].note).toBe(note);
   await expect(page.locator('[data-layer="annotations"] text')).toHaveText(
     text,
   );
@@ -357,7 +361,26 @@ test("quota à l’autosave : brouillon exportable et reprise sans perte", async
   await ready(page);
   await page.reload();
   await ready(page);
-  expect((await readPlay(page)).commonSteps[0].note).toBe(
+  expect((await readPlay(page)).commonSteps[1].note).toBe(
     "Brouillon à conserver malgré le quota.",
   );
 });
+
+async function stroke(page: Page, points: number[][]) {
+  const svg = page.locator(".editor-surface > svg");
+  await svg.scrollIntoViewIfNeeded();
+  const xy = await svg.evaluate(
+    (el, points) =>
+      points.map(([x, y]) => {
+        const p = new DOMPoint(x, y).matrixTransform(
+          (el as SVGSVGElement).getScreenCTM()!,
+        );
+        return { x: p.x, y: p.y };
+      }),
+    points,
+  );
+  await page.mouse.move(xy[0].x, xy[0].y);
+  await page.mouse.down();
+  for (const p of xy.slice(1)) await page.mouse.move(p.x, p.y, { steps: 8 });
+  await page.mouse.up();
+}

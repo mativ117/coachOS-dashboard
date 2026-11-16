@@ -2472,3 +2472,246 @@ main {
   border: 1px solid var(--border);
   border-radius: 12px;
 }
+
+/* Éditeur : le terrain est l’unique surface de placement. */
+.board-workspace {
+  min-width: 0;
+}
+.board-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+}
+.board-view-controls button {
+  min-height: 40px;
+  padding: 8px 11px;
+  font-size: 12px;
+}
+.board-view-controls button[aria-pressed="true"] {
+  background: #e2edff;
+  color: #123766;
+  border-color: #1762c8;
+}
+.board-view-controls span {
+  min-width: 44px;
+  text-align: center;
+  font-size: 12px;
+}
+.board-target:focus-visible {
+  stroke: #123766;
+  stroke-width: 3;
+  outline: none;
+}
+.editor-surface[data-tool="pan"] {
+  cursor: grab;
+}
+.full-board .editor-surface .play-diagram {
+  height: min(70vh, 720px);
+  min-height: 400px;
+}
+.path-style {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.path-style select {
+  min-height: 40px;
+}
+.setup-hint {
+  font-size: 13px;
+  color: #123766;
+  background: #e8f0fd;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.advanced-editor {
+  grid-column: 1/-1;
+  border: 1px solid #d9e3f0;
+  background: #fff;
+  border-radius: 10px;
+}
+.advanced-editor > summary {
+  padding: 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+.advanced-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+.step-counter {
+  font-size: 12px;
+  text-align: center;
+  align-self: center;
+}
+.editor .drawing-tools {
+  justify-content: flex-start;
+}
+.editor .drawing-tools button {
+  flex: 0 1 auto;
+  min-height: 44px;
+  padding: 10px 15px;
+}
+@media (max-width: 600px) {
+  .full-board .editor-surface .play-diagram {
+    height: 62vh;
+    min-height: 400px;
+  }
+  .board-view-controls button {
+    min-height: 44px;
+    font-size: 11px;
+    padding: 7px 9px;
+  }
+  .editor .drawing-tools button {
+    flex: 1 0 auto;
+    padding: 9px 10px;
+  }
+}
+.editor-panels > .editor-panel {
+  grid-column: 1/-1;
+}
+.advanced-panels > button {
+  align-self: start;
+  justify-self: start;
+}
+.editor .compact-step-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.editor .compact-step-controls button {
+  min-width: 0;
+}
+
+/* Dessiner, placer, passer : le reste reste dans les réglages. */
+.editor-settings {
+  flex: 0 0 auto;
+}
+.editor-settings > summary,
+.more-draw-tools > summary {
+  min-height: 44px;
+  padding: 12px;
+  cursor: pointer;
+  border: 1px solid #d9e3f0;
+  border-radius: 8px;
+  font-size: 12px;
+  background: #fff;
+}
+.editor-commandbar:has(.editor-settings[open]) {
+  flex-wrap: wrap;
+}
+.editor-settings[open] {
+  flex-basis: 100%;
+}
+.editor-settings-body {
+  padding: 12px 0;
+  display: grid;
+  gap: 10px;
+}
+.more-draw-tools {
+  position: relative;
+}
+.more-draw-tools > div {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #d9e3f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px #12376618;
+}
+.more-draw-tools:not([open]) > div,
+.board-view-menu:not([open]) > div,
+.editor-settings:not([open]) > div {
+  display: none;
+}
+.board-workspace {
+  position: relative;
+}
+.board-view-menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+}
+.board-view-menu > summary {
+  padding: 9px 12px;
+  min-height: 40px;
+  background: #fff;
+  border: 1px solid #d9e3f0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.board-view-menu[open] {
+  max-width: calc(100% - 16px);
+}
+.board-view-menu .board-view-controls {
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #d9e3f0;
+  border-radius: 8px;
+  max-width: 400px;
+}
+.is-editing .topbar,
+.is-editing .workspace-heading .eyebrow,
+.is-editing .workspace-heading .muted,
+.is-editing .offline-status,
+.is-editing .page-footer {
+  display: none;
+}
+.is-editing .workspace-heading {
+  margin: 8px 0 10px;
+}
+.is-editing .storage-line {
+  margin-bottom: 4px;
+}
+.editor .editor-timeline {
+  margin: 6px 0 10px;
+  padding: 8px;
+}
+.editor .timeline-top {
+  margin-bottom: 6px;
+}
+.editor .drawing-tools {
+  margin-bottom: 6px;
+}
+@media (max-width: 700px) {
+  .is-editing .sidebar .brand,
+  .is-editing .sidebar .workspace-label {
+    display: none;
+  }
+  .is-editing .sidebar {
+    padding-top: 8px;
+  }
+  .is-editing .workspace-heading h1 {
+    font-size: 20px;
+  }
+  .is-editing .page-heading {
+    margin-bottom: 8px;
+  }
+}
+.board-view-menu {
+  position: static;
+  margin: 6px 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+}
+.board-view-menu[open] {
+  max-width: 100%;
+}
+.editor-settings-body > .editor-help {
+  max-width: none;
+}

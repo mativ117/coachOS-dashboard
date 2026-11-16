@@ -42,16 +42,16 @@ test("trois espaces, notes, étapes, sélection et historique", async ({
   await page
     .getByRole("link", { name: "Ouvrir Stagger Elevator", exact: true })
     .click();
-  await expect(page).toHaveURL(/#\/editor\?play=stagger-elevator$/);
+  await expect(page).toHaveURL(/#\/editor\?play=stagger-elevator(?:&.*)?$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Stagger Elevator",
   );
-  await page.getByRole("button", { name: "Suivante →", exact: true }).click();
+  await page.locator(".timeline-steps button").nth(1).click();
   await expect(
     page.locator(".timeline-steps [aria-current=step]"),
   ).toContainText("Premier écran de 4");
   await expect(page.locator('[data-layer="screens"] path')).toHaveCount(1);
-  await page.getByRole("link", { name: "Présenter", exact: true }).click();
+  await page.getByRole("link", { name: "Présentation", exact: true }).click();
   await expect(page).toHaveTitle("CoachOS · Présentation");
   await expect(page.getByRole("navigation")).toHaveCount(0);
   await page.reload();

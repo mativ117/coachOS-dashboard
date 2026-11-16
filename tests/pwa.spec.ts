@@ -78,7 +78,7 @@ test("PWA sous chemin du dépôt : édition, présentation, réouverture et expo
   await expect(
     page.getByRole("textbox", { name: "Notes de l’étape" }),
   ).toHaveValue("Consigne enregistrée hors ligne.");
-  await page.getByRole("link", { name: "Présenter", exact: true }).click();
+  await page.getByRole("link", { name: "Présentation", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Princeton");
   await page.getByRole("button", { name: "Suivante →", exact: true }).click();
   await page.goto("#/library");

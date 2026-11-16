@@ -11,6 +11,31 @@ export const lerp = (a: Point, b: Point, t: number): Point => [
 /** Échantillonnage de la même conversion Catmull-Rom → Bézier que le SVG. */
 export function route(geometry: Action["geometry"]) {
   const p = geometry.points;
+  if (geometry.kind === "polyline") {
+    const distances = [0];
+    for (let i = 1; i < p.length; i++)
+      distances.push(
+        distances.at(-1)! +
+          Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]),
+      );
+    const length = distances.at(-1)!;
+    return {
+      length,
+      at: (t: number): Point => {
+        const distance = Math.max(0, Math.min(1, t)) * length;
+        if (distance <= 0) return [...p[0]];
+        if (distance >= length) return [...p.at(-1)!];
+        let i = 1;
+        while (i < distances.length - 1 && distances[i] < distance) i++;
+        return lerp(
+          p[i - 1],
+          p[i],
+          (distance - distances[i - 1]) /
+            (distances[i] - distances[i - 1] || 1),
+        );
+      },
+    };
+  }
   if (geometry.kind !== "catmull-rom")
     return {
       length: Math.hypot(p.at(-1)![0] - p[0][0], p.at(-1)![1] - p[0][1]),

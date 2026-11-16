@@ -14,7 +14,7 @@ export interface Action {
   actorId?: string;
   recipientId?: string;
   geometry: {
-    kind: "line" | "catmull-rom" | "legacy-screen" | "text";
+    kind: "line" | "polyline" | "catmull-rom" | "legacy-screen" | "text";
     points: Point[];
   };
   status: "recorded" | "optional" | "unassigned" | "confirmed";
@@ -33,6 +33,7 @@ export interface Step {
   actions: Action[];
   flags: string[];
   timing?: { durationMs: number };
+  purpose?: "setup";
 }
 export interface Branch {
   id: string;
@@ -49,7 +50,7 @@ export interface MigrationReport {
 }
 export interface Play {
   id: string;
-  schemaVersion: 1 | 2 | 3;
+  schemaVersion: 1 | 2 | 3 | 4;
   revision: number;
   createdAt: string;
   updatedAt: string;

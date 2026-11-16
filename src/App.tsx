@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { OfflineStatus } from "./pwa/OfflineStatus";
 import { Editor } from "./editor/Editor";
-import { createPlay } from "./editor/commands";
+import { createPlay, initialize } from "./editor/commands";
 import { Arrow } from "./components/Arrow";
 import { LibraryWorkspace } from "./files/LibraryWorkspace";
 import { PlayViewer } from "./components/PlayViewer";
@@ -186,8 +186,11 @@ export function App() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     try {
-                      const p = createPlay(
-                        String(new FormData(e.currentTarget).get("name")),
+                      const p = initialize(
+                        createPlay(
+                          String(new FormData(e.currentTarget).get("name")),
+                        ),
+                        true,
                       );
                       savePlay(p);
                       setNewPlay(false);
@@ -245,13 +248,15 @@ export function App() {
                       : "Les intentions d’origine, étape par étape."}
                   </p>
                 </div>
-                <a
-                  className="button button-primary"
-                  href={href(presentation ? "editor" : "presentation", play)}
-                >
-                  {presentation ? "Retour à l’éditeur" : "Présenter"}
-                  <Arrow />
-                </a>
+                {presentation && (
+                  <a
+                    className="button button-primary"
+                    href={href(presentation ? "editor" : "presentation", play)}
+                  >
+                    {presentation ? "Retour à l’éditeur" : "Présenter"}
+                    <Arrow />
+                  </a>
+                )}
               </div>
               {route.space === "editor" ? (
                 status === "loading" ? (
