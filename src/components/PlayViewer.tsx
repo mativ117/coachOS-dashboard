@@ -1,5 +1,11 @@
 import { AnimationPlayer } from "../animation/AnimationPlayer";
-import type { Play } from "../model/types";
-export function PlayViewer({ play }: { play: Play }) {
-  return <AnimationPlayer play={play} />;
+import type { Library, Play } from "../model/types";
+export function PlayViewer({
+  play,
+  library,
+}: {
+  play: Play;
+  library: Library;
+}) {
+  return <AnimationPlayer play={play} library={library} />;
 }

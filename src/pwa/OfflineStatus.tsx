@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useState } from "react";
 
 export function OfflineStatus() {
@@ -78,34 +79,40 @@ export function OfflineStatus() {
     <details className="offline-status">
       <summary>
         <span role="status">
-          {online ? cache : `Hors connexion · ${cache}`}
+          {online ? t(cache) : t("Hors connexion · {0}", t(cache))}
         </span>
       </summary>
       <div>
         <p>
-          Après préparation, lecture, édition et exports restent disponibles
-          sans réseau. Les données restent sur cet appareil.
+          {t(
+            "Après préparation, lecture, édition et exports restent disponibles sans réseau. Les données restent sur cet appareil.",
+          )}
         </p>
         {waiting && (
           <p role="status">
-            Mise à jour prête : attendez la fin de l’enregistrement, puis fermez
-            tous les onglets CoachOS et rouvrez l’application. Aucun
-            rechargement automatique.
+            {t(
+              "Mise à jour prête : attendez la fin de l’enregistrement, puis fermez tous les onglets CoachOS et rouvrez l’application. Aucun rechargement automatique.",
+            )}
           </p>
         )}
         <p>
-          Sur iPhone : Safari → Partager → Sur l’écran d’accueil. Sur ordinateur
-          : utilisez Installer dans le menu du navigateur si proposé.
+          {t(
+            "Sur iPhone : Safari → Partager → Sur l’écran d’accueil. Sur ordinateur : utilisez Installer dans le menu du navigateur si proposé.",
+          )}
         </p>
         {persistent === false && (
-          <button onClick={protectStorage}>Protéger le stockage local</button>
+          <button onClick={protectStorage}>
+            {t("Protéger le stockage local")}
+          </button>
         )}
-        {persistent && <p>Stockage protégé contre l’éviction automatique.</p>}
-        {storageMessage && <p role="status">{storageMessage}</p>}
+        {persistent && (
+          <p>{t("Stockage protégé contre l’éviction automatique.")}</p>
+        )}
+        {storageMessage && <p role="status">{t(storageMessage)}</p>}
         <p>
-          Effacer les données du site efface aussi la bibliothèque. Une
-          installation ou la protection du stockage ne remplace pas une
-          sauvegarde externe.
+          {t(
+            "Effacer les données du site efface aussi la bibliothèque. Une installation ou la protection du stockage ne remplace pas une sauvegarde externe.",
+          )}
         </p>
       </div>
     </details>

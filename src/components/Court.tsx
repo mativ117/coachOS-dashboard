@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useId } from "react";
 
 export type CourtKind = "half" | "full";
@@ -36,8 +37,9 @@ export function Court({
     >
       {!miniature && (
         <title id={id}>
-          {full ? "Terrain entier" : "Demi-terrain"} de basket — aperçu de
-          démonstration{players ? ", cinq joueurs numérotés" : ""}
+          {full ? t("Terrain entier") : t("Demi-terrain")}{" "}
+          {t("de basket — aperçu de démonstration")}
+          {players ? t(", cinq joueurs numérotés") : ""}
         </title>
       )}
       <rect
@@ -86,7 +88,7 @@ export function Court({
         )}
       </g>
       <text x="750" y="1100" textAnchor="middle" className="court-wordmark">
-        COACHOS
+        {t("COACHOS")}
       </text>
       {players &&
         [

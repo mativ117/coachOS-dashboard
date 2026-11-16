@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import {
   EditorCanvas,
@@ -23,24 +24,28 @@ export function PracticeBoard() {
   );
   const step = play.commonSteps[1];
   return (
-    <section className="tutorial-practice" aria-label="Terrain d’entraînement">
+    <section
+      className="tutorial-practice"
+      aria-label={t("Terrain d’entraînement")}
+    >
       <p>
-        Essaie ici : ce terrain ne change aucun de tes systèmes. Il repart à
-        zéro quand tu quittes le tuto.
+        {t(
+          "Essaie ici : ce terrain ne change aucun de tes systèmes. Il repart à zéro quand tu quittes le tuto.",
+        )}
       </p>
       <div
         className="practice-tools"
         role="toolbar"
-        aria-label="Outils du terrain d’entraînement"
+        aria-label={t("Outils du terrain d’entraînement")}
       >
         <button
           aria-pressed={tool === "select"}
           onClick={() => setTool("select")}
         >
-          Déplacer
+          {t("Déplacer")}
         </button>
         <button aria-pressed={tool === "run"} onClick={() => setTool("run")}>
-          Tracer
+          {t("Tracer")}
         </button>
         <button
           onClick={() => {
@@ -50,11 +55,11 @@ export function PracticeBoard() {
             setMessage("Terrain remis à zéro.");
           }}
         >
-          Recommencer
+          {t("Recommencer")}
         </button>
       </div>
       <p role="status" className="practice-message">
-        {message}
+        {t(message)}
       </p>
       <EditorCanvas
         key={play.id}

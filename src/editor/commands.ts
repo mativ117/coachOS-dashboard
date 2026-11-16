@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type {
   Action,
   BallState,
@@ -216,12 +217,12 @@ export function initialize(play: Play, setup = false): Play {
   if (setup) p.initialState.ball = { mode: "attached", carrierId: "1" };
   p.commonSteps = [
     setup
-      ? { ...blankStep(p.initialState, "Placement"), purpose: "setup" }
-      : blankStep(p.initialState, "Départ"),
+      ? { ...blankStep(p.initialState, t("Placement")), purpose: "setup" }
+      : blankStep(p.initialState, t("Départ")),
   ];
   return finish(p);
 }
-function blankStep(state: State, title = "Nouvelle étape"): Step {
+function blankStep(state: State, title = t("Nouvelle étape")): Step {
   return {
     id: key("step"),
     title,
@@ -285,7 +286,7 @@ export function addBranch(
   if (!fork) throw new Error("Choisissez une étape commune.");
   if (!name.trim()) throw new Error("Nommez la lecture.");
   const id = key("branch");
-  const step = blankStep(fork.afterState, "Départ de la lecture");
+  const step = blankStep(fork.afterState, t("Départ de la lecture"));
   p.branches.push({ id, name: name.trim(), forkStepId, steps: [step] });
   return { play: finish(p), branchId: id, stepId: step.id };
 }
@@ -418,7 +419,7 @@ export function createPlay(name: string): Play {
     commonSteps: [],
     branches: [],
     metadata: {
-      description: "Votre système",
+      description: t("Votre système"),
       guidance: "",
       category: "Demi-terrain",
       report: {

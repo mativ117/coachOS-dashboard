@@ -1,3 +1,5 @@
+import { LanguagePicker } from "./i18n/LanguagePicker";
+import { t, useLocale } from "./i18n";
 import { Tutorial } from "./tutorial/Tutorial";
 import { useEffect, useRef, useState } from "react";
 import { OfflineStatus } from "./pwa/OfflineStatus";
@@ -57,6 +59,7 @@ function tutorialReturn(play?: Play) {
   return `#/editor?${query}`;
 }
 export function App() {
+  const locale = useLocale();
   const {
     library,
     status,
@@ -83,8 +86,9 @@ export function App() {
     return () => removeEventListener("hashchange", change);
   }, []);
   useEffect(() => {
-    document.title = `CoachOS · ${labels[route.space]}`;
-  }, [route.space]);
+    document.title = `CoachOS · ${t(labels[route.space])}`;
+    document.documentElement.lang = locale;
+  }, [route.space, locale]);
   const presentation = route.space === "presentation";
   return (
     <div
@@ -98,20 +102,25 @@ export function App() {
           main.current?.focus();
         }}
       >
-        Aller au contenu
+        {t("Aller au contenu")}
       </a>
       <aside
         inert={atomicBusy}
         className="sidebar"
-        aria-label="Navigation principale"
+        aria-label={t("Navigation principale")}
       >
-        <a className="brand" href={href("library")} title="Accueil CoachOS">
+        <a
+          className="brand"
+          href={href("library")}
+          title={t("Accueil CoachOS")}
+        >
           <span className="brand-icon" aria-hidden="true">
-            C<span>·</span>
+            {t("C")}
+            <span>{t("·")}</span>
           </span>
-          <span>CoachOS</span>
+          <span>{t("CoachOS")}</span>
         </a>
-        <div className="workspace-label">MON ESPACE COACH</div>
+        <div className="workspace-label">{t("MON ESPACE COACH")}</div>
         <nav>
           {(Object.keys(labels) as Space[]).map((space, i) => (
             <a
@@ -127,56 +136,61 @@ export function App() {
               aria-current={space === route.space ? "page" : undefined}
             >
               <span className="nav-symbol" aria-hidden="true">
-                {["▦", "⌁", "▷", "?"][i]}
+                {[t("▦"), t("⌁"), t("▷"), "?"][i]}
               </span>
-              {labels[space]}
+              {t(labels[space])}
             </a>
           ))}
         </nav>
         <div className="sidebar-note">
           <span className="status-dot" />
-          Votre tableau de jeu<div>Concevoir. Transmettre. Jouer.</div>
+          {t("Votre tableau de jeu")}
+          <div>{t("Concevoir. Transmettre. Jouer.")}</div>
         </div>
         <div className="sidebar-footer">
           <span className="avatar" aria-hidden="true">
-            C
+            {t("C")}
           </span>
           <div>
-            Playbook OWLS<small>CoachOS · Espace personnel</small>
+            {t("Playbook OWLS")}
+            <small>{t("CoachOS · Espace personnel")}</small>
           </div>
         </div>
       </aside>
       <div className="main-wrap">
         <header className="topbar">
           <span>
-            Mon espace <span className="breadcrumb-divider">/</span>
-            <strong>{labels[route.space]}</strong>
+            {t("Mon espace ")}
+            <span className="breadcrumb-divider">{t("/")}</span>
+            <strong>{t(labels[route.space])}</strong>
           </span>
-          <span className="phase-badge">CoachOS · PWA</span>
+          <LanguagePicker />
         </header>
         <main inert={atomicBusy} id="main-content" ref={main} tabIndex={-1}>
           <OfflineStatus />
           <div className="storage-line" role="status">
             {status === "loading"
-              ? "Ouverture du stockage local…"
+              ? t("Ouverture du stockage local…")
               : status === "saving"
-                ? "Enregistrement…"
+                ? t("Enregistrement…")
                 : status === "saved"
-                  ? "Enregistré sur cet appareil"
-                  : "Stockage indisponible"}
-            {status === "saved" && <span> · Pensez à une copie externe.</span>}
+                  ? t("Enregistré sur cet appareil")
+                  : t("Stockage indisponible")}
+            {status === "saved" && (
+              <span> {t("· Pensez à une copie externe.")}</span>
+            )}
           </div>
           {status === "error" && (
             <div className="storage-error" role="alert">
-              <strong>La sauvegarde locale n’est pas disponible.</strong>
+              <strong>{t("La sauvegarde locale n’est pas disponible.")}</strong>
               <p>
-                {error} Les données existantes ne sont pas remplacées. L’export
-                contient les données de travail affichées, y compris les
-                modifications non enregistrées ; il ne restaure pas un stockage
-                illisible.
+                {t(error)}{" "}
+                {t(
+                  "Les données existantes ne sont pas remplacées. L’export contient les données de travail affichées, y compris les modifications non enregistrées ; il ne restaure pas un stockage illisible.",
+                )}
               </p>
               <button onClick={() => downloadEmergency(library)}>
-                Exporter les données affichées (JSON)
+                {t("Exporter les données affichées (JSON)")}
               </button>
               {canRetry && (
                 <button
@@ -184,7 +198,7 @@ export function App() {
                     void retry();
                   }}
                 >
-                  Réessayer la sauvegarde
+                  {t("Réessayer la sauvegarde")}
                 </button>
               )}
             </div>
@@ -195,25 +209,21 @@ export function App() {
             <>
               <div className="page-heading">
                 <div>
-                  <p className="eyebrow">VOTRE JEU, AU MÊME ENDROIT</p>
-                  <h1>La bibliothèque</h1>
+                  <p className="eyebrow">{t("VOTRE JEU, AU MÊME ENDROIT")}</p>
+                  <h1>{t("La bibliothèque")}</h1>
                   <p className="muted">
-                    Retrouvez vos systèmes. Préparez votre prochaine séance.
+                    {t(
+                      "Retrouvez vos systèmes. Préparez votre prochaine séance.",
+                    )}
                   </p>
                 </div>
-                <button
-                  className="button button-primary"
-                  onClick={() => downloadEmergency(library)}
-                >
-                  Copie de secours JSON <Arrow />
-                </button>
               </div>
               <button
                 className="new-play-button"
                 disabled={status === "loading"}
                 onClick={() => setNewPlay((v) => !v)}
               >
-                + Nouveau système
+                {t("+ Nouveau système")}
               </button>
               {newPlay && (
                 <form
@@ -237,22 +247,22 @@ export function App() {
                   }}
                 >
                   <label>
-                    Nom du nouveau système
+                    {t("Nom du nouveau système")}
                     <input name="name" maxLength={100} required autoFocus />
                   </label>
-                  <button type="submit">Créer le système</button>
-                  {createError && <p role="alert">{createError}</p>}
+                  <button type="submit">{t("Créer le système")}</button>
+                  {createError && <p role="alert">{t(createError)}</p>}
                 </form>
               )}
               <div className="notice">
                 <span className="notice-icon" aria-hidden="true">
-                  i
+                  {t("i")}
                 </span>
                 <p>
-                  <strong>Votre playbook prend vie.</strong> Les cinq systèmes
-                  OWLS et Stack sont disponibles en lecture et en édition. Les
-                  données sont locales à ce navigateur. Stack reste à confirmer
-                  ; Baseline et Losange attendent leurs premières étapes.
+                  <strong>{t("Votre playbook prend vie.")}</strong>{" "}
+                  {t(
+                    "Les cinq systèmes OWLS et Stack sont disponibles en lecture et en édition. Les données sont locales à ce navigateur. Stack reste à confirmer ; Baseline et Losange attendent leurs premières étapes.",
+                  )}
                 </p>
               </div>
               <LibraryWorkspace
@@ -264,9 +274,9 @@ export function App() {
             </>
           ) : !play ? (
             <div className="empty-state">
-              <h1>Aucun système disponible</h1>
+              <h1>{t("Aucun système disponible")}</h1>
               <a className="button" href="#/library">
-                Revenir à la bibliothèque
+                {t("Revenir à la bibliothèque")}
               </a>
             </div>
           ) : (
@@ -274,13 +284,15 @@ export function App() {
               <div className="page-heading workspace-heading">
                 <div>
                   <p className="eyebrow">
-                    {presentation ? "TRANSMETTRE LE JEU" : "OBSERVER LE JEU"}
+                    {presentation
+                      ? t("TRANSMETTRE LE JEU")
+                      : t("OBSERVER LE JEU")}
                   </p>
                   <h1>{play.name}</h1>
                   <p className="muted">
                     {presentation
-                      ? "Chaque étape, lisible pour toute l’équipe."
-                      : "Les intentions d’origine, étape par étape."}
+                      ? t("Chaque étape, lisible pour toute l’équipe.")
+                      : t("Les intentions d’origine, étape par étape.")}
                   </p>
                 </div>
                 {presentation && (
@@ -288,14 +300,14 @@ export function App() {
                     className="button button-primary"
                     href={href(presentation ? "editor" : "presentation", play)}
                   >
-                    {presentation ? "Retour à l’éditeur" : "Présenter"}
+                    {presentation ? t("Retour à l’éditeur") : t("Présenter")}
                     <Arrow />
                   </a>
                 )}
               </div>
               {route.space === "editor" ? (
                 status === "loading" ? (
-                  <p>Ouverture de l’éditeur…</p>
+                  <p>{t("Ouverture de l’éditeur…")}</p>
                 ) : (
                   <Editor
                     key={play.id}
@@ -305,13 +317,13 @@ export function App() {
                   />
                 )
               ) : (
-                <PlayViewer key={play.id} play={play} />
+                <PlayViewer key={play.id} play={play} library={library} />
               )}
             </>
           )}
           <footer className="page-footer">
-            <span>CoachOS · OWLS</span>
-            <span>Un terrain. Des idées. Votre jeu.</span>
+            <span>{t("CoachOS · OWLS")}</span>
+            <span>{t("Un terrain. Des idées. Votre jeu.")}</span>
           </footer>
         </main>
       </div>

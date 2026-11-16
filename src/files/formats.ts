@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Library, Play } from "../model/types";
 import {
   parseBoundedJson,
@@ -25,7 +26,7 @@ export function parseFile(raw: string): Incoming {
   if (obj.format === "coachos-play") {
     record(obj, ["format", "fileSchemaVersion", "exportedAt", "play"]);
     if (obj.fileSchemaVersion !== 1)
-      throw new Error("Version de fichier système inconnue.");
+      throw new Error(t("Version de fichier système inconnue."));
     date(obj.exportedAt);
     return { kind: "play", play: validatePlay(obj.play), legacy: false };
   }
@@ -100,12 +101,12 @@ export async function shareOrDownload(file: File): Promise<string> {
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: file.name });
-      return "Partage ouvert.";
+      return t("Partage ouvert.");
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError")
-        return "Partage annulé.";
+        return t("Partage annulé.");
     }
   }
   downloadFile(file);
-  return "Fichier téléchargé : partagez-le depuis vos fichiers.";
+  return t("Fichier téléchargé : partagez-le depuis vos fichiers.");
 }

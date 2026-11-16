@@ -1,3 +1,4 @@
+import { t, useLocale } from "../i18n";
 import { useEffect, useState } from "react";
 /** Garder la saisie locale permet de taper une virgule ou un point sans réécriture intermédiaire. */
 export function TimingInput({
@@ -17,14 +18,19 @@ export function TimingInput({
   placeholder?: string;
   onCommit: (value: number | undefined) => void;
 }) {
+  const locale = useLocale();
   const format = (n: number | undefined) =>
-    n === undefined ? "" : String(n).replace(".", ",");
+    n === undefined
+      ? ""
+      : locale === "fr"
+        ? String(n).replace(".", ",")
+        : String(n);
   const [draft, setDraft] = useState(() => format(value));
   const [error, setError] = useState("");
   useEffect(() => {
     setDraft(format(value));
     setError("");
-  }, [value]);
+  }, [value, locale]);
   function commit() {
     if (!draft.trim()) {
       if (value !== undefined) onCommit(undefined);
@@ -50,11 +56,11 @@ export function TimingInput({
   return (
     <>
       <input
-        aria-label={label}
+        aria-label={t(label)}
         type="text"
         inputMode={integer ? "numeric" : "decimal"}
         value={draft}
-        placeholder={placeholder}
+        placeholder={placeholder ? t(placeholder) : undefined}
         aria-invalid={error ? true : undefined}
         onChange={(e) => {
           setDraft(e.target.value);
@@ -70,7 +76,7 @@ export function TimingInput({
       />
       {error && (
         <span className="timing-input-error" role="alert">
-          {error}
+          {t(error)}
         </span>
       )}
     </>

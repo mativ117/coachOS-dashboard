@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { CourtEnd } from "./CourtEnd";
 import { useId, type ReactNode, type SVGProps } from "react";
 import type { Play, Point, Step, State } from "../model/types";
@@ -74,8 +75,9 @@ export function PlayDiagram({
     >
       {!miniature && (
         <title id={`${id}-title`}>
-          {play.name} — {step.title}
-          {raw ? " — coordonnées source, dimensions non confirmées" : ""}
+          {play.name} {t("— ")}
+          {step.title}
+          {raw ? t(" — coordonnées source, dimensions non confirmées") : ""}
         </title>
       )}
       <defs>
@@ -216,7 +218,8 @@ export function PlayDiagram({
               dominantBaseline="central"
               fontSize={raw ? 9 : 17}
             >
-              D{n}
+              {t("D")}
+              {n}
             </text>
           </g>
         ))}

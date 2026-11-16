@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { t } from "../i18n";
+import { useEffect, useRef, useState } from "react";
 import type { Library, Play } from "../model/types";
 import {
   backupFile,
@@ -16,10 +17,11 @@ export function useFileActions(library: Library) {
   const [result, setResult] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const abort = useRef<AbortController | null>(null);
+  useEffect(() => () => abort.current?.abort(), []);
   function deliver(file: File) {
     setResult(file);
     downloadFile(file);
-    setMessage(`${file.name} téléchargé.`);
+    setMessage(t("{0} téléchargé.", file.name));
   }
   function system(play: Play) {
     try {
@@ -43,7 +45,7 @@ export function useFileActions(library: Library) {
     if (busy) return;
     setBusy(true);
     setError("");
-    setProgress("Préparation du fichier…");
+    setProgress(t("Préparation du fichier…"));
     abort.current = new AbortController();
     try {
       const exporter = await import("./graphics");
@@ -57,13 +59,13 @@ export function useFileActions(library: Library) {
           : await exporter.exportPdf(
               structuredClone(value as Play[]),
               snapshot,
-              (i, n) => setProgress(`PDF : ${i} / ${n} étapes`),
+              (i, n) => setProgress(t("PDF : {0} / {1} étapes", i, n)),
               abort.current.signal,
             );
       if (!abort.current.signal.aborted) deliver(file);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError")
-        setMessage("Export annulé.");
+        setMessage(t("Export annulé."));
       else setError(e instanceof Error ? e.message : "Export impossible.");
     } finally {
       setBusy(false);
@@ -80,6 +82,7 @@ export function useFileActions(library: Library) {
     busy,
     progress,
     result,
+    clearResult: () => setResult(null),
     message,
     setMessage,
     system,
@@ -89,7 +92,7 @@ export function useFileActions(library: Library) {
     download: () => result && downloadFile(result),
     cancel: () => {
       abort.current?.abort();
-      setMessage("Export annulé.");
+      setMessage(t("Export annulé."));
     },
   };
 }

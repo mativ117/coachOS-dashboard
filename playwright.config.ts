@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   workers: 2,
   use: {
-    baseURL: "http://127.0.0.1:4188/coachOS-dashboard/",
+    baseURL: "http://127.0.0.1:4192/coachOS-dashboard/",
     launchOptions: { executablePath: process.env.CHROMIUM_PATH },
     screenshot: "only-on-failure",
   },
@@ -26,8 +26,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run preview -- --port 4188",
-    url: "http://127.0.0.1:4188/coachOS-dashboard/",
+    command: "npm run preview -- --port 4192",
+    url: "http://127.0.0.1:4192/coachOS-dashboard/",
     reuseExistingServer: !process.env.CI,
   },
 });
