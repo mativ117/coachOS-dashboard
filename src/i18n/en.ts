@@ -1,4 +1,6 @@
 export default {
+  "Tous les PNG de la sélection (.zip)": "All PNGs for selected plays (.zip)",
+  "Une seule étape (PNG)": "Single step only (PNG)",
   "+ Nouveau système": "+ New play",
   "+ Étape": "+ Step",
   ", choisis": ", choose",
@@ -727,4 +729,21 @@ export default {
     "Invalid CoachOS data: missing collection reference.",
   "Données CoachOS invalides : paramètres nécessitant la bibliothèque 2.":
     "Invalid CoachOS data: settings require library schema 2.",
+  "Le play complet : toutes ses étapes et toutes ses lectures.":
+    "The complete play: every step and every alternative read.",
+  "Un document avec tous les visuels et de courtes consignes.":
+    "One document with every diagram and brief instructions.",
+  "Tous les visuels PNG (.zip)": "All PNG diagrams (.zip)",
+  "Une image par étape, lectures incluses, dans un seul dossier à décompresser.":
+    "One image per step, including alternative reads, in a single ZIP folder.",
+  "{0} étapes communes · {1} lectures · {2} étapes au total":
+    "{0} shared steps · {1} reads · {2} steps in total",
+  "Seulement l’étape affichée": "Current step only",
+  "Télécharger cette étape en PNG": "Download this step as PNG",
+  "Images : {0} / {1} étapes": "Images: {0} / {1} steps",
+  "Brouillon : aucune étape à exporter.": "Draft: no steps to export.",
+  "exporte tous les visuels du play, y compris les lectures, avec un PNG par étape dans un dossier ZIP.":
+    "exports every diagram in the play, including alternative reads, with one PNG per step in a ZIP folder.",
+  "rassemble toutes les étapes et lectures, avec le terrain au premier plan et au maximum deux lignes de consigne par visuel.":
+    "includes all steps and alternative reads, with the court taking priority and at most two lines of instructions per diagram.",
 };

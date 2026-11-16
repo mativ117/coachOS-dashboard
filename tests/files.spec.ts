@@ -249,7 +249,7 @@ test("import malformé et quota : aucune mutation ; copie/collections sans dupli
   expect(library.collections[0].playIds).toContain(copied.id);
 });
 
-test("PNG réel avec écran T et PDF multi-plays avec branches et notes paginées", async ({
+test("PNG réel avec écran T et PDF multi-plays complet avec branches et consignes courtes", async ({
   page,
 }) => {
   test.setTimeout(90000);
@@ -306,6 +306,7 @@ test("PNG réel avec écran T et PDF multi-plays avec branches et notes paginée
   await page
     .getByRole("button", { name: "Exporter en PDF ou image", exact: true })
     .click();
+  await page.getByText("Une seule étape (PNG)", { exact: true }).click();
   await page
     .getByRole("combobox", { name: "Système à exporter en PNG" })
     .selectOption(p.id);
@@ -354,7 +355,12 @@ test("PNG réel avec écran T et PDF multi-plays avec branches et notes paginée
     .click();
   const pdf = await content(await pending);
   const document = await PDFDocument.load(pdf);
-  expect(document.getPageCount()).toBeGreaterThan(18);
+  const iso = make().plays.find((play) => play.name === "Pin Down Iso")!;
+  expect(document.getPageCount()).toBe(
+    1 +
+      iso.commonSteps.length +
+      iso.branches.reduce((n, b) => n + b.steps.length, 0),
+  );
   expect(document.getPage(0).getWidth()).toBeLessThan(
     document.getPage(0).getHeight(),
   );

@@ -1,3 +1,4 @@
+import { briefNote } from "./exportContent";
 import { t } from "../i18n";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PlayDiagram } from "../components/PlayDiagram";
@@ -226,11 +227,10 @@ async function heading(
     ]);
   const prepared = blocks.map(([text, size, weight]) => {
     ctx.font = `${weight} ${size}px ${font}`;
-    return {
-      lines: wrap(ctx, text, width - pad * 2 - (logo ? 112 : 0)),
-      size,
-      weight,
-    };
+    const allLines = wrap(ctx, text, width - pad * 2 - (logo ? 112 : 0));
+    const lines = allLines.slice(0, 2);
+    if (allLines.length > 2) lines[1] = lines[1].replace(/.{1,3}$/u, "…");
+    return { lines, size, weight };
   });
   canvas.height = Math.ceil(
     pad * 2 +
@@ -300,19 +300,61 @@ export async function exportPng(
     { type: "image/png" },
   );
 }
-const paintLines = (lines: string[], width: number) => {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = lines.length * 32 + 12;
-  const ctx = context(canvas);
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, width, canvas.height);
-  ctx.fillStyle = "#123766";
-  ctx.font = `24px ${font}`;
-  ctx.textBaseline = "top";
-  lines.forEach((line, i) => ctx.fillText(line, 0, i * 32));
-  return canvas;
-};
+export async function exportPlayImages(
+  plays: Play[],
+  library: Library,
+  onProgress?: (completed: number, total: number) => void,
+  signal?: AbortSignal,
+): Promise<File> {
+  if (!plays.length) throw new Error(t("Sélectionnez au moins un système."));
+  const { Zip, ZipPassThrough } = await import("fflate");
+  const entries = plays.flatMap(stages);
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  let zipError: Error | undefined;
+  const zip = new Zip((error, chunk) => {
+    if (error) zipError = error;
+    else chunks.push(new Uint8Array(chunk));
+  });
+  try {
+    let completed = 0;
+    for (const [playIndex, play] of plays.entries()) {
+      const folder = `${String(playIndex + 1).padStart(2, "0")}-${safeName(play.name)}`;
+      for (const [index, entry] of stages(play).entries()) {
+        signal?.throwIfAborted();
+        // Drafts have no court visual to invent; retain an explicit entry in the package.
+        if (!entry.step) {
+          const file = new ZipPassThrough(`${folder}/README.txt`);
+          zip.add(file);
+          file.push(
+            new TextEncoder().encode(t("Brouillon : aucune étape à exporter.")),
+            true,
+          );
+        } else {
+          const image = await exportPng(entry, library);
+          signal?.throwIfAborted();
+          const file = new ZipPassThrough(
+            `${folder}/${String(index + 1).padStart(3, "0")}-${safeName(entry.step.title)}.png`,
+          );
+          zip.add(file);
+          file.push(new Uint8Array(await image.arrayBuffer()), true);
+        }
+        if (zipError) throw zipError;
+        onProgress?.(++completed, entries.length);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+    signal?.throwIfAborted();
+    zip.end();
+    if (zipError) throw zipError;
+    return new File(
+      chunks,
+      `${safeName(plays.length === 1 ? plays[0].name : "CoachOS-selection")}-images.zip`,
+      { type: "application/zip" },
+    );
+  } finally {
+    zip.terminate();
+  }
+}
 export async function exportPdf(
   plays: Play[],
   library: Library,
@@ -348,7 +390,7 @@ export async function exportPdf(
     const headerBytes = await (await blob(header)).arrayBuffer();
     const embeddedHeader = await doc.embedPng(headerBytes);
     const headerHeight = header.height / 2;
-    let page = doc.addPage([width, height]);
+    const page = doc.addPage([width, height]);
     let top = height - margin;
     page.drawImage(embeddedHeader, {
       x: margin,
@@ -357,16 +399,10 @@ export async function exportPdf(
       height: headerHeight,
     });
     top -= headerHeight + 10;
-    let note =
+    const note =
       library.preferences.includeNotes === false
         ? ""
-        : (entry.step?.note ?? entry.play.metadata.description);
-    if (library.preferences.includeNotes !== false) {
-      if (entry.step?.flags.length)
-        note += t("\n\nSource — à vérifier :\n") + entry.step.flags.join("\n");
-      if (entry.first && entry.play.metadata.guidance)
-        note += t("\n\nConseils du système :\n") + entry.play.metadata.guidance;
-    }
+        : briefNote(entry.step?.note ?? "");
     if (entry.step) {
       const image = await diagram(
         entry.play,
@@ -375,10 +411,7 @@ export async function exportPdf(
       );
       const png = await doc.embedPng(await (await blob(image)).arrayBuffer());
       const available = Math.max(40, top - margin - 24);
-      const maxH =
-        note && !landscape && entry.play.court.kind === "half"
-          ? available * 0.72
-          : available;
+      const maxH = Math.max(40, available - (note ? 42 : 0));
       const factor = Math.min(
         (width - 2 * margin) / image.width,
         maxH / image.height,
@@ -394,46 +427,27 @@ export async function exportPdf(
       top -= drawH + 12;
     }
     if (note) {
-      const measure = document.createElement("canvas");
-      const ctx = context(measure);
+      const text = document.createElement("canvas");
+      const ctx = context(text);
       ctx.font = `24px ${font}`;
-      let lines = wrap(ctx, note, Math.round((width - 2 * margin) * 2));
-      while (lines.length) {
-        signal?.throwIfAborted();
-        let count = Math.floor((top - margin - 24) / 16);
-        if (count < 1) {
-          page = doc.addPage([width, height]);
-          const continuation = await heading(
-            entry,
-            library,
-            Math.round((width - 2 * margin) * 2),
-            true,
-          );
-          const img = await doc.embedPng(
-            await (await blob(continuation)).arrayBuffer(),
-          );
-          page.drawImage(img, {
-            x: margin,
-            y: height - margin - continuation.height / 2,
-            width: width - 2 * margin,
-            height: continuation.height / 2,
-          });
-          top = height - margin - continuation.height / 2 - 12;
-          count = Math.max(1, Math.floor((top - margin - 24) / 16));
-        }
-        const chunk = lines.splice(0, count);
-        const text = paintLines(chunk, Math.round((width - 2 * margin) * 2));
-        const image = await doc.embedPng(
-          await (await blob(text)).arrayBuffer(),
-        );
-        page.drawImage(image, {
-          x: margin,
-          y: top - text.height / 2,
-          width: width - 2 * margin,
-          height: text.height / 2,
-        });
-        top -= text.height / 2 + 8;
-      }
+      const allLines = wrap(ctx, note, Math.round((width - 2 * margin) * 2));
+      const lines = allLines.slice(0, 2);
+      if (allLines.length > 2) lines[1] = lines[1].replace(/.{1,3}$/u, "…");
+      text.width = Math.round((width - 2 * margin) * 2);
+      text.height = lines.length * 32 + 8;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, text.width, text.height);
+      ctx.fillStyle = "#123766";
+      ctx.font = `24px ${font}`;
+      ctx.textBaseline = "top";
+      lines.forEach((line, i) => ctx.fillText(line, 0, i * 32));
+      const image = await doc.embedPng(await (await blob(text)).arrayBuffer());
+      page.drawImage(image, {
+        x: margin,
+        y: top - text.height / 2,
+        width: width - 2 * margin,
+        height: text.height / 2,
+      });
     }
     completed++;
     onProgress?.(completed, entries.length);

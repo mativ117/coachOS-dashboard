@@ -71,20 +71,10 @@ export function ExportControl({
               {t("×")}
             </button>
           </div>
-          <p>{t("Choisissez le fichier dont vous avez besoin.")}</p>
+          <p>
+            {t("Le play complet : toutes ses étapes et toutes ses lectures.")}
+          </p>
           <div className="export-choices">
-            <button
-              disabled={io.busy || !snapshot.stage}
-              onClick={() => {
-                if (snapshot.stage) void io.graphics("png", snapshot.stage);
-              }}
-            >
-              <strong>{t("Image PNG")}</strong>
-              <span>
-                {t("L’étape affichée : ")}
-                {snapshot.stage?.step?.title ?? t("aucune étape")}
-              </span>
-            </button>
             <button
               disabled={io.busy}
               onClick={() => {
@@ -92,11 +82,48 @@ export function ExportControl({
               }}
             >
               <strong>{t("PDF du système")}</strong>
-              <span>{t("Toutes les étapes, les notes et les lectures.")}</span>
+              <span>
+                {t(
+                  "Un document avec tous les visuels et de courtes consignes.",
+                )}
+              </span>
+            </button>
+            <button
+              disabled={io.busy}
+              onClick={() => {
+                void io.graphics("images", [snapshot.play]);
+              }}
+            >
+              <strong>{t("Tous les visuels PNG (.zip)")}</strong>
+              <span>
+                {t(
+                  "Une image par étape, lectures incluses, dans un seul dossier à décompresser.",
+                )}
+              </span>
             </button>
           </div>
-          {!snapshot.stage && (
-            <p>{t("Ajoutez une étape pour créer une image du terrain.")}</p>
+          <p>
+            {t(
+              "{0} étapes communes · {1} lectures · {2} étapes au total",
+              snapshot.play.commonSteps.length,
+              snapshot.play.branches.length,
+              snapshot.play.commonSteps.length +
+                snapshot.play.branches.reduce((n, b) => n + b.steps.length, 0),
+            )}
+          </p>
+          {snapshot.stage && (
+            <details className="export-editable">
+              <summary>{t("Seulement l’étape affichée")}</summary>
+              <p>{snapshot.stage.step?.title}</p>
+              <button
+                disabled={io.busy}
+                onClick={() => {
+                  if (snapshot.stage) void io.graphics("png", snapshot.stage);
+                }}
+              >
+                {t("Télécharger cette étape en PNG")}
+              </button>
+            </details>
           )}
           {io.busy && (
             <div role="status" className="file-progress">

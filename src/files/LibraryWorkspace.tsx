@@ -206,6 +206,17 @@ export function LibraryWorkspace({
             >
               {t("PDF de la sélection")}
             </button>
+            <button
+              disabled={io.busy || !selected.length}
+              onClick={() => {
+                void io.graphics(
+                  "images",
+                  library.plays.filter((p) => selected.includes(p.id)),
+                );
+              }}
+            >
+              {t("Tous les PNG de la sélection (.zip)")}
+            </button>
             <button onClick={() => setSelected(filtered.map((p) => p.id))}>
               {t("Sélectionner les résultats (")}
               {filtered.length}
@@ -220,8 +231,8 @@ export function LibraryWorkspace({
               {t("Désélectionner")}
             </button>
           </div>
-          <div className="png-export">
-            <strong>{t("PNG d’une étape")}</strong>
+          <details className="png-export">
+            <summary>{t("Une seule étape (PNG)")}</summary>
             <label>
               {t("Système")}
               <select
@@ -262,7 +273,7 @@ export function LibraryWorkspace({
             >
               {t("Exporter le PNG")}
             </button>
-          </div>
+          </details>
           <button
             disabled={!writable || io.busy}
             onClick={() => {
