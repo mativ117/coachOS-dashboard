@@ -73,7 +73,10 @@ function rebase(steps: Step[], initial: State) {
 }
 export function finish(p: Play): Play {
   p.schemaVersion =
-    p.schemaVersion === 4 || allSteps(p).some((s) => s.purpose)
+    p.schemaVersion === 4 ||
+    allSteps(p).some(
+      (s) => s.purpose || s.actions.some((a) => a.geometry.kind === "polyline"),
+    )
       ? 4
       : p.schemaVersion === 3 ||
           allSteps(p).some(
@@ -295,6 +298,7 @@ export function addAction(
   recipientId?: string,
   curved = false,
   note?: string,
+  shape?: "polyline",
 ): { play: Play; actionId: string } {
   const id = key("action");
   const p = changeStep(play, stepId, (s) => {
@@ -307,7 +311,10 @@ export function addAction(
       id,
       kind,
       geometry: {
-        kind: kind === "annotation" ? "text" : curved ? "catmull-rom" : "line",
+        kind:
+          kind === "annotation"
+            ? "text"
+            : (shape ?? (curved ? "catmull-rom" : "line")),
         points: copy(points),
       },
       status:

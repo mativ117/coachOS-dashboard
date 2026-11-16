@@ -16,12 +16,7 @@ async function create(page: Page, name: string) {
   await page
     .getByRole("button", { name: "Créer le système", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Initialiser 5 joueurs", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "+ Étape suivante", exact: true })
-    .click();
+  await page.getByRole("button", { name: "+ Étape", exact: true }).click();
   await ready(page);
 }
 async function point(page: Page, x: number, y: number, touch = false) {
@@ -59,18 +54,20 @@ async function readPlay(page: Page) {
 
 test("courbe réglable, notes, undo/redo et rechargement fidèle", async ({
   page,
-}, info) => {
+}) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await create(page, "Courbe complète");
-  await page.getByRole("button", { name: "Course", exact: true }).click();
+  await page.getByRole("button", { name: "Tracer", exact: true }).click();
+  await stroke(page, [
+    [375, 440],
+    [300, 300],
+    [200, 180],
+  ]);
   await page
-    .getByRole("combobox", { name: "Forme du trajet" })
-    .selectOption("curve");
-  const touch = info.project.name === "mobile";
-  await point(page, 375, 440, touch);
-  await point(page, 300, 300, touch);
-  await point(page, 200, 180, touch);
+    .getByRole("button", { name: "Sélectionner le tracé 1", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
   await expect(page.locator('[data-layer="paths"] > g')).toHaveCount(1);
   const svg = page.locator(".editor-surface > svg");
   await svg.scrollIntoViewIfNeeded();
@@ -142,19 +139,17 @@ test("passe optionnelle/validée, écran courbe en T et ballon libre", async ({
     mode: "attached",
     carrierId: "2",
   });
+  await page.locator(".more-draw-tools > summary").click();
   await page.getByRole("button", { name: "Écran", exact: true }).click();
-  await page
-    .getByRole("combobox", { name: "Forme du trajet" })
-    .selectOption("curve");
-  await point(page, 100, 110);
-  await point(page, 160, 220);
-  await point(page, 240, 260);
+  await stroke(page, [
+    [100, 110],
+    [160, 220],
+    [240, 260],
+  ]);
   await expect(
     page.locator('[data-layer="paths"] > g').nth(1).locator("path"),
   ).toHaveCount(2);
-  await page
-    .getByRole("button", { name: "+ Étape suivante", exact: true })
-    .click();
+  await page.getByRole("button", { name: "+ Étape", exact: true }).click();
   await point(page, 672, 124);
   await point(page, 500, 450);
   await ready(page);
@@ -180,6 +175,7 @@ test("placement par appuis, défenseurs, lecture et terrain entier persistés", 
   const touch = info.project.name === "mobile";
   await point(page, 375, 440, touch);
   await point(page, 330, 390, touch);
+  await page.locator(".editor-settings > summary").click();
   await page.locator(".advanced-editor > summary").click();
   await page
     .getByRole("button", { name: "Ajouter 5 défenseurs", exact: true })
@@ -299,6 +295,7 @@ test("saisie rapide, glisser-déposer et annotation conservés sans exécution H
   await page.mouse.down();
   await page.mouse.move(coords[1].x, coords[1].y, { steps: 6 });
   await page.mouse.up();
+  await page.locator(".more-draw-tools > summary").click();
   await page.getByRole("button", { name: "Annotation", exact: true }).click();
   const text = "<script>window.injected=true</script>";
   await page.getByRole("textbox", { name: "Annotation à placer" }).fill(text);
@@ -368,3 +365,22 @@ test("quota à l’autosave : brouillon exportable et reprise sans perte", async
     "Brouillon à conserver malgré le quota.",
   );
 });
+
+async function stroke(page: Page, points: number[][]) {
+  const svg = page.locator(".editor-surface > svg");
+  await svg.scrollIntoViewIfNeeded();
+  const xy = await svg.evaluate(
+    (el, points) =>
+      points.map(([x, y]) => {
+        const p = new DOMPoint(x, y).matrixTransform(
+          (el as SVGSVGElement).getScreenCTM()!,
+        );
+        return { x: p.x, y: p.y };
+      }),
+    points,
+  );
+  await page.mouse.move(xy[0].x, xy[0].y);
+  await page.mouse.down();
+  for (const p of xy.slice(1)) await page.mouse.move(p.x, p.y, { steps: 8 });
+  await page.mouse.up();
+}

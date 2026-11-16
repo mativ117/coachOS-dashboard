@@ -102,7 +102,13 @@ function action(v: unknown): asserts v is Action {
   for (const k of ["actorId", "recipientId"])
     if (v[k] !== undefined) choice(v[k], ["1", "2", "3", "4", "5"]);
   record(v.geometry, ["kind", "points"]);
-  choice(v.geometry.kind, ["line", "catmull-rom", "legacy-screen", "text"]);
+  choice(v.geometry.kind, [
+    "line",
+    "polyline",
+    "catmull-rom",
+    "legacy-screen",
+    "text",
+  ]);
   list(v.geometry.points, 100);
   v.geometry.points.forEach(point);
   const points = v.geometry.points;
@@ -303,6 +309,11 @@ export function validatePlay(v: unknown): Play {
     )
   )
     fail("timing nécessitant le schéma 3");
+  if (
+    (v.schemaVersion as number) < 4 &&
+    allSteps.some((s) => s.actions.some((a) => a.geometry.kind === "polyline"))
+  )
+    fail("tracé angulaire nécessitant le schéma 4");
   for (const s of allSteps) {
     if (
       s.purpose &&

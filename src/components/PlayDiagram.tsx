@@ -141,11 +141,13 @@ export function PlayDiagram({
             <g key={a.id} data-action-id={a.id}>
               <path
                 d={
-                  a.geometry.kind === "catmull-rom"
-                    ? curve(points)
-                    : play.metadata.report.source === "historical"
+                  a.geometry.kind === "polyline"
+                    ? `M${points.map((p) => p.join(" ")).join("L")}`
+                    : a.geometry.kind === "catmull-rom"
                       ? curve(points)
-                      : `M${points[0][0]} ${points[0][1]}L${endX} ${endY}`
+                      : play.metadata.report.source === "historical"
+                        ? curve(points)
+                        : `M${points[0][0]} ${points[0][1]}L${endX} ${endY}`
                 }
                 className={`action-${a.kind}`}
                 fill="none"
@@ -154,6 +156,7 @@ export function PlayDiagram({
                   a.kind === "pass" ? (raw ? "5 4" : "9 8") : undefined
                 }
                 strokeLinecap="round"
+                strokeLinejoin="round"
                 markerEnd={
                   a.kind === "screen" ? undefined : `url(#${id}-${a.kind})`
                 }

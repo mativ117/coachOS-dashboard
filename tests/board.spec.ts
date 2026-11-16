@@ -16,9 +16,6 @@ async function create(page: Page) {
   await page
     .getByRole("button", { name: "Créer le système", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Initialiser 5 joueurs", exact: true })
-    .click();
   await ready(page);
 }
 async function at(page: Page, x: number, y: number) {
@@ -82,27 +79,23 @@ test("un seul board pour placer joueurs/ballon, dessiner et hériter à l’éta
   let p = await stored(page);
   expect(p.initialState.players["1"]).toEqual([370, 440]);
   expect(p.initialState.ball).toEqual({ mode: "attached", carrierId: "2" });
-  await page
-    .getByRole("button", { name: "+ Étape suivante", exact: true })
-    .click();
+  await page.getByRole("button", { name: "+ Étape", exact: true }).click();
   await expect(
     page.getByRole("toolbar", { name: "Outils de dessin" }).getByRole("button"),
-  ).toHaveCount(5);
+  ).toHaveCount(3);
   await at(page, 370, 440);
   await at(page, 330, 380);
   await ready(page);
   p = await stored(page);
   expect(p.commonSteps[1].actions).toEqual([]);
   expect(p.commonSteps[1].beforeState.players["1"]).toEqual([370, 440]);
-  await page.getByRole("button", { name: "Course", exact: true }).click();
+  await page.getByRole("button", { name: "Tracer", exact: true }).click();
   await at(page, 330, 380);
   await at(page, 220, 200);
   await ready(page);
   p = await stored(page);
   expect(p.commonSteps[1].actions).toHaveLength(1);
-  await page
-    .getByRole("button", { name: "+ Étape suivante", exact: true })
-    .click();
+  await page.getByRole("button", { name: "+ Étape", exact: true }).click();
   await ready(page);
   p = await stored(page);
   expect(p.commonSteps[2].beforeState.players["1"]).toEqual([220, 200]);
@@ -118,10 +111,12 @@ test("deux paniers identiques, cadre complet lisible et garde-fou demi-terrain",
   page,
 }) => {
   await create(page);
+  await page.locator(".editor-settings > summary").click();
   await page
     .getByRole("combobox", { name: "Format du play" })
     .selectOption("full");
   await ready(page);
+  await page.locator(".editor-settings > summary").click();
   const ends = await page.locator("[data-court-end]").evaluateAll((nodes) =>
     nodes.map((n) =>
       Array.from(n.querySelectorAll("rect,path,circle")).map((el) => ({
@@ -146,6 +141,7 @@ test("deux paniers identiques, cadre complet lisible et garde-fou demi-terrain",
   await ready(page);
   expect((await stored(page)).initialState.players["1"][1]).toBe(1040);
   const before = (await stored(page)).revision;
+  await page.locator(".editor-settings > summary").click();
   page.once("dialog", (d) => d.dismiss());
   await page
     .getByRole("combobox", { name: "Format du play" })
@@ -159,6 +155,8 @@ test("deux paniers identiques, cadre complet lisible et garde-fou demi-terrain",
     .selectOption("half");
   await ready(page);
   await expect(page.getByText(/Des éléments sont hors du cadre/)).toBeVisible();
+  await page.locator(".editor-settings > summary").click();
+  await page.locator(".board-view-menu > summary").click();
   await page
     .getByRole("button", {
       name: "Recadrer — voir tous les éléments",
@@ -179,6 +177,7 @@ test("zoom et déplacement du cadrage ne modifient pas les placements", async ({
 }) => {
   await create(page);
   const original = await stored(page);
+  await page.locator(".board-view-menu > summary").click();
   await page
     .getByRole("button", { name: "Agrandir le terrain", exact: true })
     .click();

@@ -14,7 +14,7 @@ export interface Action {
   actorId?: string;
   recipientId?: string;
   geometry: {
-    kind: "line" | "catmull-rom" | "legacy-screen" | "text";
+    kind: "line" | "polyline" | "catmull-rom" | "legacy-screen" | "text";
     points: Point[];
   };
   status: "recorded" | "optional" | "unassigned" | "confirmed";

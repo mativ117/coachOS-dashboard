@@ -315,6 +315,7 @@ test("timing enregistré et aperçu animé depuis l’éditeur", async ({ page }
   await page
     .getByRole("link", { name: "Retour à l’éditeur", exact: true })
     .click();
+  await page.locator(".editor-settings > summary").click();
   await page.locator(".advanced-editor > summary").click();
   await page
     .locator(".editor-panel summary")
@@ -342,7 +343,7 @@ test("timing enregistré et aperçu animé depuis l’éditeur", async ({ page }
     .getByRole("textbox", { name: "Durée de Course 1", exact: true })
     .press("Enter");
   await ready(page);
-  await page.getByRole("button", { name: "Aperçu animé", exact: true }).click();
+  await page.getByRole("button", { name: "Lire l’étape", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Lire", exact: true }),
   ).toBeVisible();
@@ -354,6 +355,7 @@ test("timing enregistré et aperçu animé depuis l’éditeur", async ({ page }
     .click();
   await page.reload();
   await ready(page);
+  await page.locator(".editor-settings > summary").click();
   await page.locator(".advanced-editor > summary").click();
   await page
     .locator(".editor-panel summary")

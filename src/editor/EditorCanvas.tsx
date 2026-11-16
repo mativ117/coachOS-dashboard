@@ -1,3 +1,4 @@
+import { cleanStroke, strokeKind } from "./cleanStroke";
 import { fittedBox } from "./viewport";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { Play, Point, Step } from "../model/types";
@@ -42,6 +43,7 @@ export function EditorCanvas({
     points: Point[],
     actor?: string,
     recipient?: string,
+    shape?: "polyline",
   ) => void;
   onErase: (id: string) => void;
   onAnnotation: (p: Point) => void;
@@ -50,6 +52,16 @@ export function EditorCanvas({
 }) {
   const svg = useRef<SVGSVGElement | null>(null);
   const [pending, setPending] = useState<Point[]>([]);
+  const ink = useRef<{
+    pointer: number;
+    points: Point[];
+    actor?: string;
+    client: Point;
+    scale: number;
+    fromPending: boolean;
+    moved: boolean;
+  } | null>(null);
+  const [inkPreview, setInkPreview] = useState<Point[]>([]);
   const [actor, setActor] = useState<string>();
   const [preview, setPreview] = useState<{
     kind: "player" | "defender" | "point" | "ball";
@@ -94,9 +106,28 @@ export function EditorCanvas({
   useEffect(() => {
     setPending([]);
     setActor(undefined);
+    ink.current = null;
+    setInkPreview([]);
     drag.current = null;
     setPreview(null);
   }, [tool, step.id]);
+  useEffect(() => {
+    const cancel = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Escape" ||
+        (event.target as Element)?.closest?.("input,textarea,select")
+      )
+        return;
+      ink.current = null;
+      drag.current = null;
+      setInkPreview([]);
+      setPending([]);
+      setActor(undefined);
+      setPreview(null);
+    };
+    addEventListener("keydown", cancel);
+    return () => removeEventListener("keydown", cancel);
+  }, []);
   function keyboardMove(
     event: React.KeyboardEvent,
     selection: NonNullable<Selection>,
@@ -161,7 +192,14 @@ export function EditorCanvas({
     return found;
   };
   const down = (e: PointerEvent<SVGSVGElement>) => {
-    if (disabled || e.button !== 0) return;
+    if (
+      disabled ||
+      e.button !== 0 ||
+      ink.current ||
+      drag.current ||
+      panDrag.current
+    )
+      return;
     e.preventDefault();
     svg.current = e.currentTarget;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -251,6 +289,29 @@ export function EditorCanvas({
       onAnnotation(p);
       return;
     }
+    if (["run", "screen", "pass"].includes(tool)) {
+      if (hitAction && !player && !pending.length) {
+        onSelect({ kind: "action", id: hitAction, point: 0 });
+        return;
+      }
+      const start =
+        pending[0] ??
+        (player?.kind === "player" ? step.afterState.players[player.id] : p);
+      ink.current = {
+        pointer: e.pointerId,
+        points: [start],
+        actor: pending.length
+          ? actor
+          : player?.kind === "player"
+            ? player.id
+            : undefined,
+        client: [e.clientX, e.clientY],
+        scale: e.currentTarget.getScreenCTM()?.a ?? 1,
+        fromPending: !!pending.length,
+        moved: false,
+      };
+      return;
+    }
     if (tool !== "select") {
       const next = pending.length
         ? [
@@ -302,6 +363,26 @@ export function EditorCanvas({
     }
   };
   const move = (e: PointerEvent<SVGSVGElement>) => {
+    if (ink.current) {
+      const stroke = ink.current;
+      if (e.pointerId !== stroke.pointer) return;
+      if (
+        Math.hypot(e.clientX - stroke.client[0], e.clientY - stroke.client[1]) >
+        5
+      )
+        stroke.moved = true;
+      const p = getPoint(e),
+        last = stroke.points.at(-1)!;
+      if (Math.hypot(p[0] - last[0], p[1] - last[1]) * stroke.scale >= 1) {
+        stroke.points.push(p);
+        if (stroke.points.length > 2048)
+          stroke.points = stroke.points.filter(
+            (_, i) => i === 0 || i % 2 === 1,
+          );
+        setInkPreview([...stroke.points]);
+      }
+      return;
+    }
     if (panDrag.current) {
       const d = panDrag.current;
       setCamera({
@@ -327,6 +408,53 @@ export function EditorCanvas({
       );
   };
   const up = (e: PointerEvent<SVGSVGElement>) => {
+    if (ink.current) {
+      const stroke = ink.current;
+      if (e.pointerId !== stroke.pointer) return;
+      ink.current = null;
+      setInkPreview([]);
+      const p = getPoint(e);
+      if (stroke.moved || stroke.fromPending) {
+        const recipient = tool === "pass" ? nearest(p, false) : null;
+        const end =
+          recipient?.kind === "player"
+            ? step.afterState.players[recipient.id]
+            : p;
+        const points =
+          tool === "pass"
+            ? [stroke.points[0], end]
+            : cleanStroke([...stroke.points, end], stroke.scale);
+        setPending([]);
+        setActor(undefined);
+        if (
+          points.length >= 2 &&
+          points.some(
+            (q) =>
+              Math.hypot(q[0] - points[0][0], q[1] - points[0][1]) *
+                stroke.scale >
+              5,
+          )
+        )
+          onDraw(
+            tool === "screen" && points.length > 2
+              ? "screen-curve"
+              : tool === "run" && points.length > 2
+                ? "curve"
+                : tool,
+            points,
+            stroke.actor,
+            recipient?.kind === "player" ? recipient.id : undefined,
+            tool !== "pass" && strokeKind(points, stroke.scale) === "polyline"
+              ? "polyline"
+              : undefined,
+          );
+      } else {
+        setPending(stroke.points);
+        setActor(stroke.actor);
+        if (stroke.actor) onSelect({ kind: "player", id: stroke.actor });
+      }
+      return;
+    }
     if (panDrag.current) {
       panDrag.current = null;
       return;
@@ -366,60 +494,6 @@ export function EditorCanvas({
     <div
       className={`board-workspace ${play.court.kind === "full" ? "full-board" : ""}`}
     >
-      <div
-        className="board-view-controls"
-        role="group"
-        aria-label="Cadrage du terrain"
-      >
-        <button
-          aria-label="Vue entière"
-          onClick={() => {
-            setCamera({ source: baseBox, frame: baseBox, zoom: 1, x: 0, y: 0 });
-            setPan(false);
-          }}
-        >
-          Vue entière
-        </button>
-        <button
-          disabled={view.zoom <= 1}
-          aria-label="Réduire le zoom"
-          onClick={() =>
-            setCamera({ ...view, zoom: Math.max(1, view.zoom - 0.5) })
-          }
-        >
-          −
-        </button>
-        <span aria-live="polite">{Math.round(view.zoom * 100)} %</span>
-        <button
-          disabled={view.zoom >= 3}
-          aria-label="Agrandir le terrain"
-          onClick={() =>
-            setCamera({ ...view, zoom: Math.min(3, view.zoom + 0.5) })
-          }
-        >
-          +
-        </button>
-        {(view.zoom > 1 || pan) && (
-          <button aria-pressed={pan} onClick={() => setPan(!pan)}>
-            Déplacer la vue
-          </button>
-        )}
-        <button
-          aria-label="Recadrer — voir tous les éléments"
-          onClick={() => {
-            setCamera({
-              source: baseBox,
-              frame: fittedBox(play, baseBox),
-              zoom: 1,
-              x: 0,
-              y: 0,
-            });
-            setPan(false);
-          }}
-        >
-          Recadrer
-        </button>
-      </div>
       <p id="board-keyboard" className="sr-only">
         Au clavier : Tab pour choisir un élément, flèches pour le déplacer, Maj
         pour un pas plus grand.
@@ -436,7 +510,21 @@ export function EditorCanvas({
             onPointerCancel: () => {
               drag.current = null;
               panDrag.current = null;
+              ink.current = null;
+              setInkPreview([]);
+              setPending([]);
+              setActor(undefined);
               setPreview(null);
+            },
+            onLostPointerCapture: () => {
+              if (ink.current) {
+                ink.current = null;
+                setInkPreview([]);
+              }
+              if (drag.current) {
+                drag.current = null;
+                setPreview(null);
+              }
             },
             ref: svg,
             role: "group",
@@ -470,7 +558,9 @@ export function EditorCanvas({
                     d={
                       a.geometry.kind === "legacy-screen"
                         ? `M${a.geometry.points[0][0] + 24} ${a.geometry.points[0][1] - 17}V${a.geometry.points[0][1] + 17}H${a.geometry.points[0][0] + 5}`
-                        : curve(a.geometry.points)
+                        : a.geometry.kind === "polyline"
+                          ? `M${a.geometry.points.map((p) => p.join(" ")).join("L")}`
+                          : curve(a.geometry.points)
                     }
                     fill="none"
                     stroke="transparent"
@@ -589,6 +679,17 @@ export function EditorCanvas({
                     />
                   ) : null;
                 })()}
+              {inkPreview.length > 1 && (
+                <path
+                  data-live-ink=""
+                  d={curve(inkPreview)}
+                  fill="none"
+                  stroke="#1762c8"
+                  strokeWidth={raw ? 2.3 : 4.3}
+                  strokeLinecap="round"
+                  pointerEvents="none"
+                />
+              )}
               {pending.map((p, i) => (
                 <circle
                   key={i}
@@ -624,6 +725,69 @@ export function EditorCanvas({
           </button>
         )}
       </div>
+      <details className="board-view-menu" name="board-overlays">
+        <summary>Vue</summary>{" "}
+        <div
+          className="board-view-controls"
+          role="group"
+          aria-label="Cadrage du terrain"
+        >
+          <button
+            aria-label="Vue entière"
+            onClick={() => {
+              setCamera({
+                source: baseBox,
+                frame: baseBox,
+                zoom: 1,
+                x: 0,
+                y: 0,
+              });
+              setPan(false);
+            }}
+          >
+            Vue entière
+          </button>
+          <button
+            disabled={view.zoom <= 1}
+            aria-label="Réduire le zoom"
+            onClick={() =>
+              setCamera({ ...view, zoom: Math.max(1, view.zoom - 0.5) })
+            }
+          >
+            −
+          </button>
+          <span aria-live="polite">{Math.round(view.zoom * 100)} %</span>
+          <button
+            disabled={view.zoom >= 3}
+            aria-label="Agrandir le terrain"
+            onClick={() =>
+              setCamera({ ...view, zoom: Math.min(3, view.zoom + 0.5) })
+            }
+          >
+            +
+          </button>
+          {(view.zoom > 1 || pan) && (
+            <button aria-pressed={pan} onClick={() => setPan(!pan)}>
+              Déplacer la vue
+            </button>
+          )}
+          <button
+            aria-label="Recadrer — voir tous les éléments"
+            onClick={() => {
+              setCamera({
+                source: baseBox,
+                frame: fittedBox(play, baseBox),
+                zoom: 1,
+                x: 0,
+                y: 0,
+              });
+              setPan(false);
+            }}
+          >
+            Recadrer
+          </button>
+        </div>
+      </details>
     </div>
   );
 }

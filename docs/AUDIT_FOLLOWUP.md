@@ -13,7 +13,7 @@ Le premier lot validé porte sur le terrain/cadrage et la simplification de l’
 | E02 | Réglages de passe sans effet | Extrémités attachées non proposées comme poignées libres ; passes courbes restent à proposer |
 | E03 | Renommer/dupliquer/supprimer une lecture | À proposer ; départ de la nouvelle lecture corrigé dans ce lot |
 | E04 | Fiche système et métadonnées | À proposer ; renommage existant conservé dans les réglages avancés |
-| E05 | Raccourcis et manipulations répétitives | Déplacement au clavier et Échap intégrés ; duplication/réorganisation d’étapes restent à proposer |
+| E05 | Raccourcis et manipulations répétitives | Déplacement au clavier, Échap, dessin à main levée nettoyé et écran recentré sur le terrain intégrés ; duplication/réorganisation d’étapes restent à proposer |
 | E06 | Rotation de vue et miroir tactique | À proposer ; aucune transformation tactique ajoutée |
 | B01 | Sélection limitée aux résultats filtrés | À proposer |
 | B02 | Séparer catégorie tactique et format | À proposer |

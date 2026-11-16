@@ -6,7 +6,7 @@ Espace personnel de conception et présentation de systèmes de basket. React, T
 
 Bibliothèque, éditeur tactile/PC et présentation animée. Les cinq systèmes historiques et Stack sont migrés ; Pin Down Iso garde ses quatre lectures. Baseline et Losange restent des brouillons jusqu’à leur initialisation volontaire.
 
-L’éditeur utilise le terrain comme surface de placement : joueurs, défenseurs, ballon et points de tracés se déplacent directement. Les nouveaux systèmes commencent par Placement ; chaque étape suivante reprend l’état précédent. Les courses/courbes, passes, écrans en T et annotations sont dessinés explicitement : déplacer un pion ne génère pas une action. Les notes sont repliables, les lectures et timings sont dans les réglages avancés. Undo/redo, autosave et aperçu animé sont conservés. Voir `docs/BOARD_EDITOR_REVIEW.md`.
+L’éditeur utilise le terrain comme surface de placement : joueurs, défenseurs, ballon et points de tracés se déplacent directement. Les nouveaux systèmes commencent par Placement ; chaque étape suivante reprend l’état précédent. Les mouvements sont dessinés explicitement au doigt ou à la souris ; le geste est nettoyé en conservant ses angles ou ses courbes. Déplacer un pion ne génère pas une action. Trois outils principaux : Déplacer, Tracer, Passe ; écrans et annotations dans Autres. Les étapes sont au-dessus du terrain, les notes sont repliables et les commandes secondaires sont dans Réglages et Vue. Undo/redo, autosave et aperçu animé sont conservés. Voir `docs/BOARD_EDITOR_REVIEW.md`.
 
 Le lecteur propose lire/pause/reprise, vitesse, progression, étapes et branches. La pause et le changement de vitesse conservent le temps courant. Les groupes identiques jouent ensemble ; les suivants attendent la fin des précédents. Les timings par défaut sont un tempo de démonstration, jamais une décision tactique importée.
 
@@ -16,7 +16,7 @@ Plein écran natif si disponible, sinon mode agrandi avec gestion du focus et d�
 
 Les données sont enregistrées dans **IndexedDB, sur ce navigateur et cet appareil**. Les écritures sont sérialisées, atomiques et contrôlées par révision. En cas d’échec, le brouillon affiché reste exportable en JSON de secours. Effacer les données du navigateur peut effacer la bibliothèque locale : gardez une copie externe.
 
-Les schémas 1 à 3 restent lisibles ; le schéma 4 ajoute le placement initial explicite des nouveaux systèmes. Les versions inconnues sont refusées sans remise à zéro. Les deux fichiers sources restent intacts. Le terrain entier est enregistré dans le play et présenté comme tel, sans transformation arbitraire des coordonnées.
+Les schémas 1 à 3 restent lisibles ; le schéma 4 ajoute le placement initial explicite et les tracés angulaires des nouveaux gestes. Les versions inconnues sont refusées sans remise à zéro. Les deux fichiers sources restent intacts. Le terrain entier est enregistré dans le play et présenté comme tel, sans transformation arbitraire des coordonnées.
 
 Les fichiers `.coachos` transportent un système éditable ; `.coachos-backup` sauvegarde toute la bibliothèque, les collections, le profil et les préférences. Chaque import affiche un aperçu : annuler, remplacer ou conserver les deux. Une restauration complète nécessite un choix explicite et garde le précédent état local récupérable. Les copies recâblent leurs identifiants internes.
 
