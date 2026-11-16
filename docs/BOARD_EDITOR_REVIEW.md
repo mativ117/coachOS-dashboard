@@ -1,4 +1,4 @@
-# Éditeur sur le terrain — lot de revue
+# Éditeur sur le terrain — lot livré
 
 ## Parcours retenu
 
@@ -48,3 +48,10 @@ Le placement est conservé dans les exports éditables, sauvegardes et copies. U
 Sur un système d’essai : placer joueur et ballon, créer une étape, tracer un zigzag en un geste puis une courbe et une passe, vérifier le nettoyage et l’annulation en une action, créer l’étape suivante et vérifier l’héritage ; recharger. Tester le terrain complet, zoomer, déplacer la vue, puis tester le garde-fou demi-terrain. Ouvrir un système historique et vérifier les tracés/lectures.
 
 Cette branche est destinée à une revue avant fusion/publication. Le workflow Pages reste manuel ; aucune publication n’est déclenchée par la PR.
+
+
+## Publication et recette du 16 novembre 2026
+
+PR #8 fusionnée et version `10a701337508de18e22992a016bd1ac551454a62` publiée sur https://mativ117.github.io/coachOS-dashboard/ après réussite des 112 tests, du build, du format et de l’audit de production. Workflow : https://github.com/mativ117/coachOS-dashboard/actions/runs/43834254364.
+
+Recette réelle de l’URL publiée dans deux profils Chromium isolés (1440 × 1000 et 390 × 844) : huit systèmes initiaux, nouveau placement, courbe conservée après nettoyage et rechargement, zigzag angulaire, lecture/pause, export PNG de l’étape courbe et PDF de trois pages ; édition et exports réalisés après coupure du réseau. Aucune erreur JavaScript ni réponse HTTP en erreur relevée. L’essai sur iPhone/Safari réel reste à effectuer ; les suites de l’audit restent dans AUDIT_FOLLOWUP.md.
