@@ -193,3 +193,45 @@ test("écran de travail : terrain directement visible, étapes avant le board et
     page.getByRole("button", { name: "Écran", exact: true }),
   ).not.toBeVisible();
 });
+
+test("une courbe dessinée reste courbe après nettoyage, animation et rechargement", async ({
+  page,
+}, info) => {
+  await create(page);
+  await page.getByRole("button", { name: "Tracer", exact: true }).click();
+  const points = Array.from({ length: 61 }, (_, i) => {
+    const t = i / 60;
+    return [375 + 140 * Math.sin(Math.PI * t), 440 - 240 * t];
+  });
+  await gesture(page, points, info.project.name === "mobile");
+  await ready(page);
+  const before = await read(page),
+    action = before.commonSteps[1].actions[0];
+  expect(action.geometry.kind).toBe("catmull-rom");
+  expect(action.geometry.points.length).toBeGreaterThan(3);
+  expect(action.geometry.points[0]).toEqual([375, 440]);
+  expect(action.geometry.points.at(-1)).toEqual([375, 200]);
+  expect(Math.max(...action.geometry.points.map((p) => p[0]))).toBeGreaterThan(
+    500,
+  );
+  const measured = await page
+    .locator("[data-layer=paths] path")
+    .evaluate((el) => {
+      const path = el as SVGPathElement;
+      const p = path.getPointAtLength(path.getTotalLength() * 0.5);
+      return [p.x, p.y];
+    });
+  const { route } = await import("../src/animation/geometry");
+  const animated = route(action.geometry).at(0.5);
+  expect(
+    Math.hypot(animated[0] - measured[0], animated[1] - measured[1]),
+  ).toBeLessThan(1);
+  expect(animated[0]).toBeGreaterThan(500);
+  await page.reload();
+  await ready(page);
+  expect((await read(page)).commonSteps[1].actions[0]).toEqual(action);
+  await expect(page.locator("[data-layer=paths] path")).toHaveAttribute(
+    "d",
+    / C/,
+  );
+});

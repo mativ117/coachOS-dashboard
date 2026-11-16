@@ -35,8 +35,8 @@ Le placement est conservé dans les exports éditables, sauvegardes et copies. U
 
 ## Vérifications
 
-- Régression complète : 110 tests, dont 38 modèle/stockage et 36 parcours dans chacun des formats Chromium ordinateur/mobile.
-- Nettoyage vérifié : petits tremblements, angles de zigzag, boucle, bornes, comportement au zoom, gestes souris et tactiles CDP, annulation d’un geste interrompu, undo/redo en une action, rechargement, roundtrip et animation sur les segments. Le nettoyage concerne uniquement le geste en cours, jamais les dessins historiques ou importés.
+- Régression complète : 112 tests, dont 38 modèle/stockage et 37 parcours dans chacun des formats Chromium ordinateur/mobile.
+- Nettoyage vérifié : petits tremblements, angles de zigzag, boucle, bornes, comportement au zoom, gestes souris et tactiles CDP, courbe réellement tracée conservée après nettoyage/rechargement et animation comparée au chemin SVG, annulation d’un geste interrompu, undo/redo en une action, rechargement, roundtrip et animation sur les segments. Le nettoyage concerne uniquement le geste en cours, jamais les dessins historiques ou importés.
 - Nouveaux tests : placement versionné, héritage des états et des lectures, dessin explicite, possession, aller-retour éditable, refus des placements incohérents, symétrie des géométries et styles, garde-fou de cadre avec annulation sans écriture, zoom/déplacement sans mutation, état de navigation restauré.
 - Les tests existants couvrent courbes/écrans en T, passes exécutées et optionnelles, ballon libre, notes, Undo/Redo, saisie rapide, quotas et secours, imports/conflits/restauration, exports PNG/PDF, PWA et absence de défaut axe sérieux/critique.
 - Comparaison des 65 vues historiques dans chacun des deux formats ; parcours de navigation de l’éditeur adapté à la timeline unique.
