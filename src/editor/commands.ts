@@ -73,16 +73,18 @@ function rebase(steps: Step[], initial: State) {
 }
 export function finish(p: Play): Play {
   p.schemaVersion =
-    p.schemaVersion === 3 ||
-    allSteps(p).some(
-      (s) =>
-        s.timing !== undefined ||
-        s.actions.some(
-          (a) => a.order !== undefined || a.durationMs !== undefined,
-        ),
-    )
-      ? 3
-      : 2;
+    p.schemaVersion === 4 || allSteps(p).some((s) => s.purpose)
+      ? 4
+      : p.schemaVersion === 3 ||
+          allSteps(p).some(
+            (s) =>
+              s.timing !== undefined ||
+              s.actions.some(
+                (a) => a.order !== undefined || a.durationMs !== undefined,
+              ),
+          )
+        ? 3
+        : 2;
   p.revision++;
   p.updatedAt = new Date().toISOString();
   p.metadata.originalReport ??= copy(p.metadata.report);
@@ -113,7 +115,12 @@ export function changeStep(
   change: (step: Step) => void,
 ): Play {
   const p = copy(play);
-  change(getStep(p, id));
+  const step = getStep(p, id);
+  change(step);
+  if (step.purpose === "setup") {
+    step.beforeState = copy(step.afterState);
+    p.initialState = copy(step.afterState);
+  }
   return finish(p);
 }
 export function changePlay(play: Play, change: (p: Play) => void): Play {
@@ -134,6 +141,12 @@ export function movePlayer(
       : s.afterState.players;
     const old = positions[id];
     positions[id] = copy(point);
+    if (s.purpose === "setup") {
+      const initial = defender
+        ? (s.beforeState.defenders ??= {})
+        : s.beforeState.players;
+      initial[id] = copy(point);
+    }
     if (!defender)
       for (const a of s.actions)
         if (
@@ -175,9 +188,15 @@ export function setBall(
       "Désactivez d’abord la passe exécutée qui impose cette possession.",
     );
   target.ball = copy(ball);
+  const setup = owner?.purpose === "setup" ? owner : getStep(p, stepId);
+  if (setup.purpose === "setup") {
+    setup.beforeState.ball = copy(ball);
+    setup.afterState.ball = copy(ball);
+    p.initialState.ball = copy(ball);
+  }
   return finish(p);
 }
-export function initialize(play: Play): Play {
+export function initialize(play: Play, setup = false): Play {
   if (play.commonSteps.length)
     throw new Error("Ce play possède déjà des étapes.");
   const p = copy(play);
@@ -191,7 +210,12 @@ export function initialize(play: Play): Play {
     },
     ball: null,
   };
-  p.commonSteps = [blankStep(p.initialState, "Départ")];
+  if (setup) p.initialState.ball = { mode: "attached", carrierId: "1" };
+  p.commonSteps = [
+    setup
+      ? { ...blankStep(p.initialState, "Placement"), purpose: "setup" }
+      : blankStep(p.initialState, "Départ"),
+  ];
   return finish(p);
 }
 function blankStep(state: State, title = "Nouvelle étape"): Step {

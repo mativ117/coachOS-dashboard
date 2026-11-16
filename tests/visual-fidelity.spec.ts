@@ -44,9 +44,9 @@ test("rendu statique : positions, courbes, marqueurs écran et ballon identiques
         old.base.length + old.variants[branch!].steps.length;
       for (let i = 0; i < count; i++) {
         if (i > 0) await original.locator("#next").click();
-        await page
-          .getByRole("combobox", { name: "Choisir l’étape" })
-          .selectOption(String(i));
+        const target = page.locator(".timeline-steps button").nth(i);
+        await target.dispatchEvent("click");
+        await expect(target).toHaveAttribute("aria-current", "step");
         const expected = await original.evaluate(() => ({
           paths: Array.from(document.querySelectorAll("#paths path"), (p) =>
             p.getAttribute("d"),

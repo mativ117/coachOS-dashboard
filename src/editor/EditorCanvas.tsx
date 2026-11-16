@@ -1,4 +1,5 @@
-import { useRef, useState, type PointerEvent } from "react";
+import { fittedBox } from "./viewport";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { Play, Point, Step } from "../model/types";
 import { bounds, curve, PlayDiagram } from "../components/PlayDiagram";
 export type Tool =
@@ -26,7 +27,7 @@ export function EditorCanvas({
   onDraw,
   onErase,
   onAnnotation,
-  onFreeBall,
+  onBallDrop,
   disabled = false,
 }: {
   play: Play;
@@ -44,7 +45,7 @@ export function EditorCanvas({
   ) => void;
   onErase: (id: string) => void;
   onAnnotation: (p: Point) => void;
-  onFreeBall: (p: Point) => void;
+  onBallDrop: (p: Point, carrier?: string) => void;
   disabled?: boolean;
 }) {
   const svg = useRef<SVGSVGElement | null>(null);
@@ -65,11 +66,69 @@ export function EditorCanvas({
   } | null>(null);
   const fixedBounds = useRef(bounds(play));
   const raw = play.court.coordinateSpace === "stack-raw";
-  const box = raw
+  const baseBox = raw
     ? fixedBounds.current
     : play.court.kind === "full"
       ? "0 0 750 1215"
       : "0 0 750 655";
+  const [camera, setCamera] = useState({
+    source: baseBox,
+    frame: baseBox,
+    zoom: 1,
+    x: 0,
+    y: 0,
+  });
+  const [pan, setPan] = useState(false);
+  const panDrag = useRef<{
+    client: Point;
+    x: number;
+    y: number;
+    scale: number;
+  } | null>(null);
+  const view =
+    camera.source === baseBox
+      ? camera
+      : { source: baseBox, frame: baseBox, zoom: 1, x: 0, y: 0 };
+  const [bx, by, bw, bh] = view.frame.split(" ").map(Number);
+  const box = `${bx + bw / 2 - bw / view.zoom / 2 + view.x} ${by + bh / 2 - bh / view.zoom / 2 + view.y} ${bw / view.zoom} ${bh / view.zoom}`;
+  useEffect(() => {
+    setPending([]);
+    setActor(undefined);
+    drag.current = null;
+    setPreview(null);
+  }, [tool, step.id]);
+  function keyboardMove(
+    event: React.KeyboardEvent,
+    selection: NonNullable<Selection>,
+    position: Point,
+  ) {
+    if (disabled) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect(selection);
+      return;
+    }
+    const directions: Record<string, Point> = {
+      ArrowLeft: [-1, 0],
+      ArrowRight: [1, 0],
+      ArrowUp: [0, -1],
+      ArrowDown: [0, 1],
+    };
+    const d = directions[event.key];
+    if (!d) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const amount = (raw ? 1 : 5) * (event.shiftKey ? 5 : 1);
+    const point: Point = [
+      position[0] + d[0] * amount,
+      position[1] + d[1] * amount,
+    ];
+    onSelect(selection);
+    if (selection.kind === "ball") onBallDrop(point);
+    else if (selection.kind === "action")
+      onPoint(selection.id, selection.point, point);
+    else onMove(selection.id, point, selection.kind === "defender");
+  }
   const getPoint = (e: PointerEvent<SVGSVGElement>): Point => {
     const matrix = e.currentTarget.getScreenCTM();
     if (!matrix) return [0, 0];
@@ -106,7 +165,63 @@ export function EditorCanvas({
     e.preventDefault();
     svg.current = e.currentTarget;
     e.currentTarget.setPointerCapture(e.pointerId);
+    if (pan) {
+      panDrag.current = {
+        client: [e.clientX, e.clientY],
+        x: view.x,
+        y: view.y,
+        scale: e.currentTarget.getScreenCTM()?.a ?? 1,
+      };
+      return;
+    }
     const p = getPoint(e);
+    const ball = step.afterState.ball;
+    const ballPosition: Point | undefined =
+      ball?.mode === "free"
+        ? ball.position
+        : ball?.mode === "attached"
+          ? [
+              step.afterState.players[ball.carrierId][0] + (raw ? 11 : 22),
+              step.afterState.players[ball.carrierId][1] + (raw ? 7 : 14),
+            ]
+          : undefined;
+    const near = nearest(p);
+    const nearPosition =
+      near?.kind === "player"
+        ? step.afterState.players[near.id]
+        : near?.kind === "defender"
+          ? step.afterState.defenders?.[near.id]
+          : undefined;
+    const ballIsCloser =
+      ballPosition &&
+      (!nearPosition ||
+        Math.hypot(p[0] - ballPosition[0], p[1] - ballPosition[1]) <
+          Math.hypot(p[0] - nearPosition[0], p[1] - nearPosition[1]));
+    if (
+      tool === "select" &&
+      ballIsCloser &&
+      (e.target as Element).closest("[data-board-ball]")
+    ) {
+      onSelect({ kind: "ball" });
+      drag.current = {
+        selection: { kind: "ball" },
+        start: p,
+        client: [e.clientX, e.clientY],
+        moved: false,
+        empty: false,
+      };
+      return;
+    }
+    if (tool === "select" && selected?.kind === "ball") {
+      drag.current = {
+        selection: selected,
+        start: p,
+        client: [e.clientX, e.clientY],
+        moved: false,
+        empty: true,
+      };
+      return;
+    }
     const hit = (e.target as Element).closest("[data-handle]");
     if (hit && selected?.kind === "action") {
       const point = Number(hit.getAttribute("data-handle"));
@@ -121,7 +236,10 @@ export function EditorCanvas({
       };
       return;
     }
-    const player = nearest(p, tool === "select");
+    const player =
+      tool === "select" || tool === "pass" || pending.length === 0
+        ? nearest(p, tool === "select")
+        : null;
     const hitAction = (e.target as Element)
       .closest("[data-select-action]")
       ?.getAttribute("data-select-action");
@@ -184,6 +302,15 @@ export function EditorCanvas({
     }
   };
   const move = (e: PointerEvent<SVGSVGElement>) => {
+    if (panDrag.current) {
+      const d = panDrag.current;
+      setCamera({
+        ...view,
+        x: d.x - (e.clientX - d.client[0]) / d.scale,
+        y: d.y - (e.clientY - d.client[1]) / d.scale,
+      });
+      return;
+    }
     const d = drag.current;
     if (!d) return;
     const p = getPoint(e);
@@ -200,6 +327,10 @@ export function EditorCanvas({
       );
   };
   const up = (e: PointerEvent<SVGSVGElement>) => {
+    if (panDrag.current) {
+      panDrag.current = null;
+      return;
+    }
     const d = drag.current;
     drag.current = null;
     setPreview(null);
@@ -207,8 +338,11 @@ export function EditorCanvas({
     const p = getPoint(e),
       s = d.selection;
     if (s.kind === "action") onPoint(s.id, s.point, p);
-    else if (s.kind === "ball") onFreeBall(p);
-    else onMove(s.id, p, s.kind === "defender");
+    else if (s.kind === "ball") {
+      const recipient = nearest(p, false);
+      onBallDrop(p, recipient?.kind === "player" ? recipient.id : undefined);
+      onSelect(null);
+    } else onMove(s.id, p, s.kind === "defender");
   };
   const shown = preview ? structuredClone(step) : step;
   if (preview) {
@@ -229,106 +363,267 @@ export function EditorCanvas({
       : undefined;
   const radius = raw ? 5 : 11;
   return (
-    <div className="editor-surface" data-tool={tool}>
-      <PlayDiagram
-        play={play}
-        step={shown}
-        viewBox={box}
-        svgProps={{
-          onPointerDown: down,
-          onPointerMove: move,
-          onPointerUp: up,
-          onPointerCancel: () => {
-            drag.current = null;
-            setPreview(null);
-          },
-          ref: svg,
-        }}
-        overlay={
-          <g className="editor-overlays">
-            {step.actions
-              .filter((a) => a.kind !== "annotation")
-              .map((a) => (
-                <path
-                  key={a.id}
-                  data-select-action={a.id}
-                  d={
-                    a.geometry.kind === "legacy-screen"
-                      ? `M${a.geometry.points[0][0] + 24} ${a.geometry.points[0][1] - 17}V${a.geometry.points[0][1] + 17}H${a.geometry.points[0][0] + 5}`
-                      : curve(a.geometry.points)
-                  }
-                  fill="none"
-                  stroke="transparent"
-                  strokeWidth="22"
-                  vectorEffect="non-scaling-stroke"
-                  pointerEvents="stroke"
-                />
-              ))}
-            {selectedAction?.geometry.points.map((p, i) => (
-              <circle
-                key={i}
-                data-handle={i}
-                cx={p[0]}
-                cy={p[1]}
-                r={radius}
-                className={
-                  selected?.kind === "action" && selected.point === i
-                    ? "point-handle active"
-                    : "point-handle"
-                }
-              />
-            ))}
-            {selected &&
-              (selected.kind === "player" || selected.kind === "defender") &&
-              (() => {
-                const p =
-                  selected.kind === "player"
-                    ? shown.afterState.players[selected.id]
-                    : shown.afterState.defenders?.[selected.id];
-                return p ? (
-                  <circle
-                    cx={p[0]}
-                    cy={p[1]}
-                    r={raw ? 14 : 29}
-                    className="selection-ring"
-                    pointerEvents="none"
-                  />
-                ) : null;
-              })()}
-            {pending.map((p, i) => (
-              <circle
-                key={i}
-                cx={p[0]}
-                cy={p[1]}
-                r={radius * 0.7}
-                className="point-handle"
-                pointerEvents="none"
-              />
-            ))}
-            {pending.length > 1 && (
-              <path
-                d={curve(pending)}
-                fill="none"
-                stroke="#1762c8"
-                strokeWidth={raw ? 2 : 3}
-                strokeDasharray="5 4"
-                pointerEvents="none"
-              />
-            )}
-          </g>
-        }
-      />
-      {pending.length > 0 && (
+    <div
+      className={`board-workspace ${play.court.kind === "full" ? "full-board" : ""}`}
+    >
+      <div
+        className="board-view-controls"
+        role="group"
+        aria-label="Cadrage du terrain"
+      >
         <button
-          className="cancel-draw"
+          aria-label="Vue entière"
           onClick={() => {
-            setPending([]);
-            setActor(undefined);
+            setCamera({ source: baseBox, frame: baseBox, zoom: 1, x: 0, y: 0 });
+            setPan(false);
           }}
         >
-          Annuler le tracé ({pending.length})
+          Vue entière
         </button>
-      )}
+        <button
+          disabled={view.zoom <= 1}
+          aria-label="Réduire le zoom"
+          onClick={() =>
+            setCamera({ ...view, zoom: Math.max(1, view.zoom - 0.5) })
+          }
+        >
+          −
+        </button>
+        <span aria-live="polite">{Math.round(view.zoom * 100)} %</span>
+        <button
+          disabled={view.zoom >= 3}
+          aria-label="Agrandir le terrain"
+          onClick={() =>
+            setCamera({ ...view, zoom: Math.min(3, view.zoom + 0.5) })
+          }
+        >
+          +
+        </button>
+        {(view.zoom > 1 || pan) && (
+          <button aria-pressed={pan} onClick={() => setPan(!pan)}>
+            Déplacer la vue
+          </button>
+        )}
+        <button
+          aria-label="Recadrer — voir tous les éléments"
+          onClick={() => {
+            setCamera({
+              source: baseBox,
+              frame: fittedBox(play, baseBox),
+              zoom: 1,
+              x: 0,
+              y: 0,
+            });
+            setPan(false);
+          }}
+        >
+          Recadrer
+        </button>
+      </div>
+      <p id="board-keyboard" className="sr-only">
+        Au clavier : Tab pour choisir un élément, flèches pour le déplacer, Maj
+        pour un pas plus grand.
+      </p>
+      <div className="editor-surface" data-tool={pan ? "pan" : tool}>
+        <PlayDiagram
+          play={play}
+          step={shown}
+          viewBox={box}
+          svgProps={{
+            onPointerDown: down,
+            onPointerMove: move,
+            onPointerUp: up,
+            onPointerCancel: () => {
+              drag.current = null;
+              panDrag.current = null;
+              setPreview(null);
+            },
+            ref: svg,
+            role: "group",
+            "aria-labelledby": undefined,
+            "aria-label": "Terrain interactif",
+            onKeyDown: (e) => {
+              if (e.key === "Escape") {
+                setPending([]);
+                setActor(undefined);
+                onSelect(null);
+              }
+            },
+          }}
+          overlay={
+            <g className="editor-overlays">
+              {step.actions
+                .filter((a) => a.kind !== "annotation")
+                .map((a) => (
+                  <path
+                    key={a.id}
+                    data-select-action={a.id}
+                    role="button"
+                    tabIndex={disabled ? -1 : 0}
+                    aria-label={`Sélectionner le tracé ${step.actions.indexOf(a) + 1}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelect({ kind: "action", id: a.id, point: 0 });
+                      }
+                    }}
+                    d={
+                      a.geometry.kind === "legacy-screen"
+                        ? `M${a.geometry.points[0][0] + 24} ${a.geometry.points[0][1] - 17}V${a.geometry.points[0][1] + 17}H${a.geometry.points[0][0] + 5}`
+                        : curve(a.geometry.points)
+                    }
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth="22"
+                    vectorEffect="non-scaling-stroke"
+                    pointerEvents="stroke"
+                  />
+                ))}
+              {Object.entries(shown.afterState.players).map(([id, p]) => (
+                <circle
+                  key={`hit-${id}`}
+                  data-board-player={id}
+                  cx={p[0]}
+                  cy={p[1]}
+                  r={raw ? 10 : 21}
+                  fill="transparent"
+                  role="button"
+                  tabIndex={disabled ? -1 : 0}
+                  aria-label={`Déplacer joueur ${id}`}
+                  aria-describedby="board-keyboard"
+                  onKeyDown={(e) => keyboardMove(e, { kind: "player", id }, p)}
+                  className="board-target"
+                />
+              ))}
+              {Object.entries(shown.afterState.defenders ?? {}).map(
+                ([id, p]) => (
+                  <circle
+                    key={`def-${id}`}
+                    cx={p[0]}
+                    cy={p[1]}
+                    r={raw ? 10 : 21}
+                    fill="transparent"
+                    role="button"
+                    tabIndex={disabled ? -1 : 0}
+                    aria-label={`Déplacer défenseur ${id}`}
+                    aria-describedby="board-keyboard"
+                    onKeyDown={(e) =>
+                      keyboardMove(e, { kind: "defender", id }, p)
+                    }
+                    className="board-target"
+                  />
+                ),
+              )}
+              {shown.afterState.ball &&
+                (() => {
+                  const ball = shown.afterState.ball;
+                  const p: Point =
+                    ball.mode === "free"
+                      ? ball.position
+                      : [
+                          shown.afterState.players[ball.carrierId][0] +
+                            (raw ? 11 : 22),
+                          shown.afterState.players[ball.carrierId][1] +
+                            (raw ? 7 : 14),
+                        ];
+                  return (
+                    <circle
+                      data-board-ball=""
+                      stroke="transparent"
+                      strokeWidth="24"
+                      vectorEffect="non-scaling-stroke"
+                      cx={p[0]}
+                      cy={p[1]}
+                      r={raw ? 6 : 12}
+                      fill="transparent"
+                      role="button"
+                      tabIndex={disabled ? -1 : 0}
+                      aria-label="Déplacer le ballon"
+                      aria-describedby="board-keyboard"
+                      className="board-target"
+                      onKeyDown={(e) => keyboardMove(e, { kind: "ball" }, p)}
+                    />
+                  );
+                })()}
+              {(selectedAction?.kind === "pass"
+                ? undefined
+                : selectedAction
+              )?.geometry.points.map((p, i) => (
+                <circle
+                  key={i}
+                  data-handle={i}
+                  cx={p[0]}
+                  cy={p[1]}
+                  r={radius}
+                  role="button"
+                  tabIndex={disabled ? -1 : 0}
+                  aria-label={`Déplacer le point ${i + 1}`}
+                  onKeyDown={(e) =>
+                    keyboardMove(
+                      e,
+                      { kind: "action", id: selectedAction!.id, point: i },
+                      p,
+                    )
+                  }
+                  className={
+                    selected?.kind === "action" && selected.point === i
+                      ? "point-handle active"
+                      : "point-handle"
+                  }
+                />
+              ))}
+              {selected &&
+                (selected.kind === "player" || selected.kind === "defender") &&
+                (() => {
+                  const p =
+                    selected.kind === "player"
+                      ? shown.afterState.players[selected.id]
+                      : shown.afterState.defenders?.[selected.id];
+                  return p ? (
+                    <circle
+                      cx={p[0]}
+                      cy={p[1]}
+                      r={raw ? 14 : 29}
+                      className="selection-ring"
+                      pointerEvents="none"
+                    />
+                  ) : null;
+                })()}
+              {pending.map((p, i) => (
+                <circle
+                  key={i}
+                  cx={p[0]}
+                  cy={p[1]}
+                  r={radius * 0.7}
+                  className="point-handle"
+                  pointerEvents="none"
+                />
+              ))}
+              {pending.length > 1 && (
+                <path
+                  d={curve(pending)}
+                  fill="none"
+                  stroke="#1762c8"
+                  strokeWidth={raw ? 2 : 3}
+                  strokeDasharray="5 4"
+                  pointerEvents="none"
+                />
+              )}
+            </g>
+          }
+        />
+        {pending.length > 0 && (
+          <button
+            className="cancel-draw"
+            onClick={() => {
+              setPending([]);
+              setActor(undefined);
+            }}
+          >
+            Annuler le tracé ({pending.length})
+          </button>
+        )}
+      </div>
     </div>
   );
 }

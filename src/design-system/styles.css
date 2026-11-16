@@ -2472,3 +2472,121 @@ main {
   border: 1px solid var(--border);
   border-radius: 12px;
 }
+
+/* Éditeur : le terrain est l’unique surface de placement. */
+.board-workspace {
+  min-width: 0;
+}
+.board-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+}
+.board-view-controls button {
+  min-height: 40px;
+  padding: 8px 11px;
+  font-size: 12px;
+}
+.board-view-controls button[aria-pressed="true"] {
+  background: #e2edff;
+  color: #123766;
+  border-color: #1762c8;
+}
+.board-view-controls span {
+  min-width: 44px;
+  text-align: center;
+  font-size: 12px;
+}
+.board-target:focus-visible {
+  stroke: #123766;
+  stroke-width: 3;
+  outline: none;
+}
+.editor-surface[data-tool="pan"] {
+  cursor: grab;
+}
+.full-board .editor-surface .play-diagram {
+  height: min(70vh, 720px);
+  min-height: 400px;
+}
+.path-style {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.path-style select {
+  min-height: 40px;
+}
+.setup-hint {
+  font-size: 13px;
+  color: #123766;
+  background: #e8f0fd;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.advanced-editor {
+  grid-column: 1/-1;
+  border: 1px solid #d9e3f0;
+  background: #fff;
+  border-radius: 10px;
+}
+.advanced-editor > summary {
+  padding: 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+.advanced-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+.step-counter {
+  font-size: 12px;
+  text-align: center;
+  align-self: center;
+}
+.editor .drawing-tools {
+  justify-content: flex-start;
+}
+.editor .drawing-tools button {
+  flex: 0 1 auto;
+  min-height: 44px;
+  padding: 10px 15px;
+}
+@media (max-width: 600px) {
+  .full-board .editor-surface .play-diagram {
+    height: 62vh;
+    min-height: 400px;
+  }
+  .board-view-controls button {
+    min-height: 44px;
+    font-size: 11px;
+    padding: 7px 9px;
+  }
+  .editor .drawing-tools button {
+    flex: 1 0 auto;
+    padding: 9px 10px;
+  }
+}
+.editor-panels > .editor-panel {
+  grid-column: 1/-1;
+}
+.advanced-panels > button {
+  align-self: start;
+  justify-self: start;
+}
+.editor .compact-step-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.editor .compact-step-controls button {
+  min-width: 0;
+}

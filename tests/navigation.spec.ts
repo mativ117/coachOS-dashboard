@@ -42,7 +42,7 @@ test("trois espaces, notes, étapes, sélection et historique", async ({
   await page
     .getByRole("link", { name: "Ouvrir Stagger Elevator", exact: true })
     .click();
-  await expect(page).toHaveURL(/#\/editor\?play=stagger-elevator$/);
+  await expect(page).toHaveURL(/#\/editor\?play=stagger-elevator(?:&.*)?$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Stagger Elevator",
   );

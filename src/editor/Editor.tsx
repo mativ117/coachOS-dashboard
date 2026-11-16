@@ -1,3 +1,4 @@
+import { outsideHalf } from "./viewport";
 import { TimingInput } from "./TimingInput";
 import { AnimationPlayer } from "../animation/AnimationPlayer";
 import { compileStep } from "../animation/engine";
@@ -17,8 +18,8 @@ import type { Library } from "../model/types";
 const tools: { id: Tool; name: string; hint: string }[] = [
   {
     id: "select",
-    name: "Sélection",
-    hint: "Sélectionnez un joueur puis son arrivée, ou glissez-le. Réglez aussi les coordonnées dans Sélection.",
+    name: "Déplacer",
+    hint: "Déplacez les pions ou le ballon directement sur le terrain. Un déplacement seul ne dessine pas de mouvement.",
   },
   {
     id: "run",
@@ -80,8 +81,25 @@ export function Editor({
     future: Play[];
   }>({ past: [], present: play, future: [] });
   const hist = useRef(history);
-  const [scope, setScope] = useState(play.branches[0]?.id ?? "common");
-  const [stepId, setStepId] = useState(sequence(play, scope)[0]?.id ?? "");
+  const [scope, setScope] = useState(() => {
+    const requested = new URLSearchParams(location.hash.split("?")[1]).get(
+      "branch",
+    );
+    return requested === "common" ||
+      play.branches.some((b) => b.id === requested)
+      ? requested!
+      : (play.branches[0]?.id ?? "common");
+  });
+  const [stepId, setStepId] = useState(() => {
+    const requested = new URLSearchParams(location.hash.split("?")[1]).get(
+      "step",
+    );
+    return (
+      sequence(play, scope).find((s) => s.id === requested)?.id ??
+      sequence(play, scope)[0]?.id ??
+      ""
+    );
+  });
   const [preview, setPreview] = useState(false);
   const [tool, setTool] = useState<Tool>("select");
   const [selected, setSelected] = useState<Selection>(null);
@@ -92,7 +110,18 @@ export function Editor({
   const steps = sequence(draft, scope);
   const step = steps.find((s) => s.id === stepId) ?? steps[0];
   const index = step ? steps.indexOf(step) : 0;
+  useEffect(() => {
+    if (!step) return;
+    const [path, search = ""] = location.hash.split("?");
+    const query = new URLSearchParams(search);
+    query.set("step", step.id);
+    query.set("branch", scope);
+    window.history.replaceState(null, "", `${path}?${query}`);
+  }, [step?.id, scope]);
   const report = draft.metadata.originalReport ?? draft.metadata.report;
+  useEffect(() => {
+    if (step?.purpose) setTool("select");
+  }, [step?.id, step?.purpose]);
   function apply(next: Play, groupKey = "") {
     const current = hist.current;
     const merge =
@@ -181,16 +210,6 @@ export function Editor({
     selected?.kind === "action"
       ? step?.actions.find((a) => a.id === selected.id)
       : undefined;
-  const position =
-    selected?.kind === "player"
-      ? step?.afterState.players[selected.id]
-      : selected?.kind === "defender"
-        ? step?.afterState.defenders?.[selected.id]
-        : selected?.kind === "action"
-          ? action?.geometry.points[selected.point]
-          : selected?.kind === "ball" && step?.afterState.ball?.mode === "free"
-            ? step.afterState.ball.position
-            : undefined;
   const ballValue = (ball: BallState) =>
     ball?.mode === "attached"
       ? ball.carrierId
@@ -209,27 +228,6 @@ export function Editor({
                 : [375, 350],
           }
         : { mode: "attached", carrierId: value };
-  const movePoint = (point: Point) => {
-    if (!step || !selected) return;
-    if (selected.kind === "action")
-      run(() =>
-        commands.editPoint(draft, step.id, selected.id, selected.point, point),
-      );
-    else if (selected.kind === "ball")
-      run(() =>
-        commands.setBall(draft, step.id, { mode: "free", position: point }),
-      );
-    else
-      run(() =>
-        commands.movePlayer(
-          draft,
-          step.id,
-          selected.id,
-          point,
-          selected.kind === "defender",
-        ),
-      );
-  };
   if (preview)
     return (
       <section className="editor editor-preview">
@@ -268,16 +266,25 @@ export function Editor({
             aria-label="Format du play"
             value={draft.court.kind}
             disabled={draft.court.coordinateSpace === "stack-raw" || loading}
-            onChange={(e) =>
+            onChange={(e) => {
+              const kind = e.target.value as "half" | "full";
+              if (
+                kind === "half" &&
+                outsideHalf(draft) &&
+                !confirm(
+                  "Des éléments de ce système sont hors du demi-terrain. Afficher ce cadre partiel ? Leurs positions seront conservées. Annuler garde le terrain complet.",
+                )
+              )
+                return;
               run(() =>
                 commands.changePlay(draft, (p) => {
-                  p.court.kind = e.target.value as "half" | "full";
+                  p.court.kind = kind;
                 }),
-              )
-            }
+              );
+            }}
           >
-            <option value="half">Demi-terrain</option>
-            <option value="full">Terrain entier</option>
+            <option value="half">Demi</option>
+            <option value="full">Complet</option>
           </select>
         </label>
         <button disabled={!step || loading} onClick={() => setPreview(true)}>
@@ -317,7 +324,7 @@ export function Editor({
           <button
             className="button-primary"
             disabled={loading}
-            onClick={() => run(() => commands.initialize(draft))}
+            onClick={() => run(() => commands.initialize(draft, true))}
           >
             Initialiser 5 joueurs
           </button>
@@ -329,17 +336,57 @@ export function Editor({
             role="toolbar"
             aria-label="Outils de dessin"
           >
-            {tools.map((t) => (
-              <button
-                key={t.id}
-                aria-pressed={tool === t.id}
-                disabled={loading}
-                onClick={() => setTool(t.id)}
-              >
-                {t.name}
-              </button>
-            ))}
+            {tools
+              .filter(
+                (t) =>
+                  !["erase", "curve", "screen-curve"].includes(t.id) &&
+                  (!step.purpose || t.id === "select"),
+              )
+              .map((t) => (
+                <button
+                  key={t.id}
+                  aria-pressed={
+                    tool === t.id ||
+                    (t.id === "run" && tool === "curve") ||
+                    (t.id === "screen" && tool === "screen-curve")
+                  }
+                  disabled={loading}
+                  onClick={() => setTool(t.id)}
+                >
+                  {t.name}
+                </button>
+              ))}
           </div>
+          {!step.purpose &&
+            ["run", "curve", "screen", "screen-curve"].includes(tool) && (
+              <label className="path-style">
+                Trajet{" "}
+                <select
+                  aria-label="Forme du trajet"
+                  value={tool.includes("curve") ? "curve" : "line"}
+                  onChange={(e) =>
+                    setTool(
+                      tool.startsWith("screen")
+                        ? e.target.value === "curve"
+                          ? "screen-curve"
+                          : "screen"
+                        : e.target.value === "curve"
+                          ? "curve"
+                          : "run",
+                    )
+                  }
+                >
+                  <option value="line">Droit</option>
+                  <option value="curve">Courbe</option>
+                </select>
+              </label>
+            )}
+          {step.purpose && (
+            <p className="setup-hint">
+              1. Placez les joueurs et le ballon. 2. Créez l’étape suivante pour
+              dessiner les mouvements.
+            </p>
+          )}
           <p className="tool-hint" role="status">
             {tools.find((t) => t.id === tool)!.hint}
           </p>
@@ -358,8 +405,32 @@ export function Editor({
               à confirmer.
             </p>
           )}
+          {!step.afterState.ball && (
+            <button
+              className="add-ball"
+              onClick={() =>
+                run(() =>
+                  commands.setBall(draft, step.id, {
+                    mode: "free",
+                    position:
+                      draft.court.coordinateSpace === "stack-raw"
+                        ? [180, 160]
+                        : [375, 350],
+                  }),
+                )
+              }
+            >
+              Ajouter le ballon
+            </button>
+          )}
+          {draft.court.kind === "half" && outsideHalf(draft) && (
+            <p className="shared-hint" role="status">
+              Des éléments sont hors du cadre. « Voir tous les éléments » permet
+              de les retrouver.
+            </p>
+          )}
           <EditorCanvas
-            key={`${step.id}:${tool}`}
+            key={draft.id}
             play={draft}
             step={step}
             tool={tool}
@@ -381,9 +452,15 @@ export function Editor({
               );
               setSelected(null);
             }}
-            onFreeBall={(p) =>
+            onBallDrop={(point, carrier) =>
               run(() =>
-                commands.setBall(draft, step.id, { mode: "free", position: p }),
+                commands.setBall(
+                  draft,
+                  step.id,
+                  carrier
+                    ? { mode: "attached", carrierId: carrier }
+                    : { mode: "free", position: point },
+                ),
               )
             }
             onAnnotation={(p) => {
@@ -410,29 +487,31 @@ export function Editor({
           />
           <div className="editor-timeline">
             <div className="timeline-top">
-              <label>
-                Lecture
-                <select
-                  aria-label="Choisir la lecture"
-                  value={
-                    draft.branches.some((b) => b.id === scope)
-                      ? scope
-                      : "common"
-                  }
-                  onChange={(e) => {
-                    setScope(e.target.value);
-                    setStepId(sequence(draft, e.target.value)[0]?.id ?? "");
-                    setSelected(null);
-                  }}
-                >
-                  <option value="common">Tronc commun</option>
-                  {draft.branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {draft.branches.length > 0 && (
+                <label>
+                  Lecture
+                  <select
+                    aria-label="Choisir la lecture"
+                    value={
+                      draft.branches.some((b) => b.id === scope)
+                        ? scope
+                        : "common"
+                    }
+                    onChange={(e) => {
+                      setScope(e.target.value);
+                      setStepId(sequence(draft, e.target.value)[0]?.id ?? "");
+                      setSelected(null);
+                    }}
+                  >
+                    <option value="common">Tronc commun</option>
+                    {draft.branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <button
                 disabled={loading}
                 onClick={() => {
@@ -446,7 +525,7 @@ export function Editor({
                   }
                 }}
               >
-                + Étape
+                + Étape suivante
               </button>
             </div>
             <div className="timeline-steps" aria-label="Étapes du système">
@@ -475,23 +554,9 @@ export function Editor({
               >
                 ← Précédente
               </button>
-              <label>
-                <span className="sr-only">Étape</span>
-                <select
-                  aria-label="Choisir l’étape"
-                  value={index}
-                  onChange={(e) => {
-                    setStepId(steps[Number(e.target.value)].id);
-                    setSelected(null);
-                  }}
-                >
-                  {steps.map((s, i) => (
-                    <option key={s.id} value={i}>
-                      {i + 1}. {s.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <span className="step-counter">
+                Étape {index + 1} / {steps.length}
+              </span>
               <button
                 disabled={index === steps.length - 1}
                 onClick={() => {
@@ -504,332 +569,201 @@ export function Editor({
             </div>
           </div>
           <div className="editor-panels">
-            <details
-              className="editor-panel"
-              open={!!selected || tool === "annotation"}
-            >
-              <summary>
-                Sélection
-                {selected?.kind === "player"
-                  ? ` · Joueur ${selected.id}`
-                  : selected?.kind === "defender"
-                    ? ` · Défenseur ${selected.id}`
-                    : action
-                      ? ` · ${actionNames[action.kind]}`
-                      : ""}
-              </summary>
-              <div className="panel-body">
-                <label>
-                  Élément
-                  <select
-                    aria-label="Élément sélectionné"
-                    value={
-                      selected?.kind === "player"
-                        ? `p:${selected.id}`
-                        : selected?.kind === "defender"
-                          ? `d:${selected.id}`
-                          : selected?.kind === "action"
-                            ? `a:${selected.id}`
-                            : selected?.kind === "ball"
-                              ? "ball"
-                              : ""
-                    }
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "ball") setSelected({ kind: "ball" });
-                      else if (v.startsWith("a:"))
-                        setSelected({
-                          kind: "action",
-                          id: v.slice(2),
-                          point: 0,
-                        });
-                      else if (v)
-                        setSelected({
-                          kind: v[0] === "p" ? "player" : "defender",
-                          id: v.slice(2),
-                        });
-                      else setSelected(null);
-                    }}
-                  >
-                    <option value="">Choisir…</option>
-                    {Object.keys(step.afterState.players).map((n) => (
-                      <option key={`p${n}`} value={`p:${n}`}>
-                        Joueur {n}
-                      </option>
-                    ))}
-                    {Object.keys(step.afterState.defenders ?? {}).map((n) => (
-                      <option key={`d${n}`} value={`d:${n}`}>
-                        Défenseur {n}
-                      </option>
-                    ))}
-                    <option value="ball">Ballon libre</option>
-                    {step.actions.map((a, i) => (
-                      <option key={a.id} value={`a:${a.id}`}>
-                        {i + 1}. {actionNames[a.kind]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {action && (
-                  <>
-                    <label>
-                      Point du tracé
-                      <select
-                        aria-label="Point du tracé"
-                        value={selected?.kind === "action" ? selected.point : 0}
-                        onChange={(e) =>
-                          setSelected({
-                            kind: "action",
-                            id: action.id,
-                            point: Number(e.target.value),
-                          })
-                        }
-                      >
-                        {action.geometry.points.map((_, i) => (
-                          <option key={i} value={i}>
-                            {i + 1}
-                            {i === 0
-                              ? " · départ"
-                              : i === action.geometry.points.length - 1
-                                ? " · arrivée"
-                                : " · contrôle"}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Acteur
-                      <select
-                        aria-label="Acteur du tracé"
-                        value={action.actorId ?? ""}
-                        onChange={(e) =>
-                          run(() =>
-                            commands.editAction(
-                              draft,
-                              step.id,
-                              action.id,
-                              (a) => {
-                                if (e.target.value) {
-                                  a.actorId = e.target.value;
-                                  a.status =
-                                    a.kind === "pass" ? "optional" : "recorded";
-                                } else {
-                                  delete a.actorId;
-                                  a.status = "unassigned";
-                                }
-                                delete a.ballBeforeConfirmation;
-                              },
-                            ),
-                          )
-                        }
-                      >
-                        <option value="">Non associé</option>
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <option key={n} value={n}>
-                            Joueur {n}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {action.kind === "pass" && (
-                      <>
-                        <label>
-                          Destinataire
-                          <select
-                            aria-label="Destinataire de la passe"
-                            value={action.recipientId ?? ""}
-                            onChange={(e) =>
-                              run(() =>
-                                commands.editAction(
-                                  draft,
-                                  step.id,
-                                  action.id,
-                                  (a) => {
-                                    if (e.target.value)
-                                      a.recipientId = e.target.value;
-                                    else delete a.recipientId;
+            {(action || tool === "annotation") && (
+              <details
+                className="editor-panel"
+                open={action?.kind === "pass" || tool === "annotation"}
+              >
+                <summary>
+                  Sélection
+                  {selected?.kind === "player"
+                    ? ` · Joueur ${selected.id}`
+                    : selected?.kind === "defender"
+                      ? ` · Défenseur ${selected.id}`
+                      : action
+                        ? ` · ${actionNames[action.kind]}`
+                        : ""}
+                </summary>
+                <div className="panel-body">
+                  {action && (
+                    <>
+                      <label>
+                        Acteur
+                        <select
+                          aria-label="Acteur du tracé"
+                          value={action.actorId ?? ""}
+                          onChange={(e) =>
+                            run(() =>
+                              commands.editAction(
+                                draft,
+                                step.id,
+                                action.id,
+                                (a) => {
+                                  if (e.target.value) {
+                                    a.actorId = e.target.value;
                                     a.status =
-                                      a.actorId && a.recipientId
+                                      a.kind === "pass"
                                         ? "optional"
-                                        : "unassigned";
-                                    delete a.ballBeforeConfirmation;
-                                  },
-                                ),
-                              )
-                            }
-                          >
-                            <option value="">Non associé</option>
-                            {[1, 2, 3, 4, 5].map((n) => (
-                              <option key={n} value={n}>
-                                Joueur {n}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="checkbox-label">
+                                        : "recorded";
+                                  } else {
+                                    delete a.actorId;
+                                    a.status = "unassigned";
+                                  }
+                                  delete a.ballBeforeConfirmation;
+                                },
+                              ),
+                            )
+                          }
+                        >
+                          <option value="">Non associé</option>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <option key={n} value={n}>
+                              Joueur {n}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {action.kind === "pass" && (
+                        <>
+                          <label>
+                            Destinataire
+                            <select
+                              aria-label="Destinataire de la passe"
+                              value={action.recipientId ?? ""}
+                              onChange={(e) =>
+                                run(() =>
+                                  commands.editAction(
+                                    draft,
+                                    step.id,
+                                    action.id,
+                                    (a) => {
+                                      if (e.target.value)
+                                        a.recipientId = e.target.value;
+                                      else delete a.recipientId;
+                                      a.status =
+                                        a.actorId && a.recipientId
+                                          ? "optional"
+                                          : "unassigned";
+                                      delete a.ballBeforeConfirmation;
+                                    },
+                                  ),
+                                )
+                              }
+                            >
+                              <option value="">Non associé</option>
+                              {[1, 2, 3, 4, 5].map((n) => (
+                                <option key={n} value={n}>
+                                  Joueur {n}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={action.status === "confirmed"}
+                              onChange={(e) =>
+                                run(() =>
+                                  commands.confirmPass(
+                                    draft,
+                                    step.id,
+                                    action.id,
+                                    e.target.checked,
+                                  ),
+                                )
+                              }
+                            />
+                            Exécuter cette passe
+                          </label>
+                        </>
+                      )}
+                      {action.kind !== "annotation" && (
+                        <label>
+                          Épaisseur
                           <input
-                            type="checkbox"
-                            checked={action.status === "confirmed"}
+                            aria-label="Épaisseur du tracé"
+                            type="range"
+                            min="1"
+                            max="8"
+                            step=".5"
+                            value={
+                              action.width ??
+                              (draft.court.coordinateSpace === "stack-raw"
+                                ? 2.3
+                                : 4.3)
+                            }
                             onChange={(e) =>
-                              run(() =>
-                                commands.confirmPass(
-                                  draft,
-                                  step.id,
-                                  action.id,
-                                  e.target.checked,
-                                ),
+                              run(
+                                () =>
+                                  commands.editAction(
+                                    draft,
+                                    step.id,
+                                    action.id,
+                                    (a) => {
+                                      a.width = Number(e.target.value);
+                                    },
+                                  ),
+                                `width:${action.id}`,
                               )
                             }
                           />
-                          Exécuter cette passe
                         </label>
-                      </>
-                    )}
-                    {action.kind !== "annotation" && (
-                      <label>
-                        Épaisseur
-                        <input
-                          aria-label="Épaisseur du tracé"
-                          type="range"
-                          min="1"
-                          max="8"
-                          step=".5"
-                          value={
-                            action.width ??
-                            (draft.court.coordinateSpace === "stack-raw"
-                              ? 2.3
-                              : 4.3)
-                          }
-                          onChange={(e) =>
-                            run(
-                              () =>
-                                commands.editAction(
-                                  draft,
-                                  step.id,
-                                  action.id,
-                                  (a) => {
-                                    a.width = Number(e.target.value);
-                                  },
-                                ),
-                              `width:${action.id}`,
-                            )
-                          }
-                        />
-                      </label>
-                    )}
-                    {action.kind === "annotation" && (
-                      <label>
-                        Texte
-                        <input
-                          aria-label="Texte de l’annotation"
-                          maxLength={300}
-                          value={action.text ?? ""}
-                          onChange={(e) =>
-                            run(
-                              () =>
-                                commands.editAction(
-                                  draft,
-                                  step.id,
-                                  action.id,
-                                  (a) => {
-                                    a.text = e.target.value;
-                                  },
-                                ),
-                              `text:${action.id}`,
-                            )
-                          }
-                        />
-                      </label>
-                    )}
-                    <button
-                      className="danger-button"
-                      onClick={() => {
-                        run(() =>
-                          commands.changeStep(draft, step.id, (s) => {
-                            s.actions = s.actions.filter(
-                              (a) => a.id !== action.id,
-                            );
-                          }),
-                        );
-                        setSelected(null);
-                      }}
-                    >
-                      Supprimer le tracé
-                    </button>
-                  </>
-                )}
-                {position && (
-                  <form
-                    key={`${selected?.kind}:${JSON.stringify(selected)}:${position.join()}`}
-                    className="coordinate-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const data = new FormData(e.currentTarget);
-                      movePoint([Number(data.get("x")), Number(data.get("y"))]);
-                    }}
-                  >
-                    <label>
-                      X
-                      <input
-                        aria-label="Position X"
-                        name="x"
-                        type="number"
-                        step=".1"
-                        min="-10000"
-                        max="10000"
-                        required
-                        defaultValue={position[0]}
-                      />
-                    </label>
-                    <label>
-                      Y
-                      <input
-                        aria-label="Position Y"
-                        name="y"
-                        type="number"
-                        step=".1"
-                        min="-10000"
-                        max="10000"
-                        required
-                        defaultValue={position[1]}
-                      />
-                    </label>
-                    <button type="submit">Appliquer la position</button>
-                  </form>
-                )}
-                {tool === "annotation" && (
-                  <label>
-                    Texte à placer
-                    <input
-                      aria-label="Annotation à placer"
-                      maxLength={300}
-                      value={annotation}
-                      onChange={(e) => setAnnotation(e.target.value)}
-                    />
-                  </label>
-                )}
-                <button
-                  onClick={() =>
-                    run(() =>
-                      commands.changeStep(draft, step.id, (s) => {
-                        if (Object.keys(s.afterState.defenders ?? {}).length) {
-                          delete s.afterState.defenders;
-                        } else
-                          s.afterState.defenders = Object.fromEntries(
-                            Object.entries(s.afterState.players).map(
-                              ([id, p]) => [id, [p[0] + 25, p[1] + 25]],
-                            ),
+                      )}
+                      {action.kind === "annotation" && (
+                        <label>
+                          Texte
+                          <input
+                            aria-label="Texte de l’annotation"
+                            maxLength={300}
+                            value={action.text ?? ""}
+                            onChange={(e) =>
+                              run(
+                                () =>
+                                  commands.editAction(
+                                    draft,
+                                    step.id,
+                                    action.id,
+                                    (a) => {
+                                      a.text = e.target.value;
+                                    },
+                                  ),
+                                `text:${action.id}`,
+                              )
+                            }
+                          />
+                        </label>
+                      )}
+                      <button
+                        className="danger-button"
+                        onClick={() => {
+                          run(() =>
+                            commands.changeStep(draft, step.id, (s) => {
+                              s.actions = s.actions.filter(
+                                (a) => a.id !== action.id,
+                              );
+                            }),
                           );
-                      }),
-                    )
-                  }
-                >
-                  {Object.keys(step.afterState.defenders ?? {}).length
-                    ? "Retirer les défenseurs"
-                    : "Ajouter 5 défenseurs"}
-                </button>
-              </div>
-            </details>
+                          setSelected(null);
+                        }}
+                      >
+                        Supprimer le tracé
+                      </button>
+                    </>
+                  )}
+                  {tool === "annotation" && (
+                    <label>
+                      Texte à placer
+                      <input
+                        aria-label="Annotation à placer"
+                        maxLength={300}
+                        value={annotation}
+                        onChange={(e) => setAnnotation(e.target.value)}
+                      />
+                    </label>
+                  )}
+                </div>
+              </details>
+            )}
             <details className="editor-panel">
               <summary>Notes · {step.title}</summary>
               <div className="panel-body">
@@ -886,247 +820,286 @@ export function Editor({
                 </button>
               </div>
             </details>
-            <details className="editor-panel">
-              <summary>Ballon</summary>
-              <div className="panel-body">
-                {(["Départ", "Arrivée"] as const).map((label, i) => (
-                  <label key={label}>
-                    {label}
-                    <select
-                      aria-label={`Porteur ${i === 0 ? "au départ" : "à l’arrivée"}`}
-                      value={ballValue(
-                        i === 0 ? step.beforeState.ball : step.afterState.ball,
-                      )}
-                      onChange={(e) =>
-                        run(() =>
-                          commands.setBall(
-                            draft,
-                            step.id,
-                            ballFrom(e.target.value),
-                            i === 0,
-                          ),
-                        )
-                      }
-                    >
-                      <option value="unknown">Non renseigné</option>
-                      <option value="free">Libre</option>
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <option key={n} value={n}>
-                          Joueur {n}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
+            <details className="advanced-editor">
+              <summary>
+                Réglages avancés · lectures, animation et possession
+              </summary>
+              <div className="advanced-panels">
                 <button
-                  disabled={step.afterState.ball?.mode !== "free"}
-                  onClick={() => {
-                    setSelected({ kind: "ball" });
-                    setTool("select");
-                  }}
+                  onClick={() =>
+                    run(() =>
+                      commands.changeStep(draft, step.id, (s) => {
+                        if (Object.keys(s.afterState.defenders ?? {}).length) {
+                          delete s.afterState.defenders;
+                        } else
+                          s.afterState.defenders = Object.fromEntries(
+                            Object.entries(s.afterState.players).map(
+                              ([id, p]) => [id, [p[0] + 25, p[1] + 25]],
+                            ),
+                          );
+                      }),
+                    )
+                  }
                 >
-                  Déplacer le ballon libre
+                  {Object.keys(step.afterState.defenders ?? {}).length
+                    ? "Retirer les défenseurs"
+                    : "Ajouter 5 défenseurs"}
                 </button>
-                <p>
-                  Le ballon attaché suit son porteur. Une passe optionnelle ne
-                  transfère pas la possession.
-                </p>
-              </div>
-            </details>
-            <details className="editor-panel">
-              <summary>Animation · ordre et durée</summary>
-              <div className="panel-body">
-                <label>
-                  Durée de l’étape (s)
-                  <TimingInput
-                    label="Durée de l’étape (secondes)"
-                    min={0.1}
-                    max={30}
-                    value={
-                      step.timing ? step.timing.durationMs / 1000 : undefined
-                    }
-                    placeholder="1,4 par défaut"
-                    onCommit={(value) =>
-                      run(
-                        () =>
-                          commands.changeStep(draft, step.id, (s) => {
-                            if (value !== undefined)
-                              s.timing = {
-                                durationMs: Math.round(value * 1000),
-                              };
-                            else delete s.timing;
-                          }),
-                        `step-duration:${step.id}`,
-                      )
-                    }
-                  />
-                </label>
-                <p>
-                  Validez un champ avec Entrée ou en le quittant. Les actions
-                  d’un même groupe commencent ensemble. Les groupes suivants
-                  attendent la fin du précédent. Une durée d’action explicite
-                  peut allonger l’étape.
-                </p>
-                {step.actions
-                  .filter(
-                    (a) =>
-                      a.kind !== "annotation" &&
-                      a.geometry.kind !== "legacy-screen" &&
-                      (a.kind !== "pass" || a.status === "confirmed"),
-                  )
-                  .map((a) => (
-                    <fieldset className="action-timing" key={a.id}>
-                      <legend>
-                        {actionNames[a.kind]} ·{" "}
-                        {a.actorId
-                          ? `Joueur ${a.actorId}`
-                          : "Acteur à associer"}
-                      </legend>
-                      <label>
-                        Groupe
-                        <TimingInput
-                          label={`Groupe de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
-                          min={0}
-                          max={99}
-                          integer
-                          value={a.order}
-                          placeholder="0"
-                          onCommit={(value) =>
-                            run(
-                              () =>
-                                commands.editAction(
+                {!draft.commonSteps[0]?.purpose && (
+                  <details className="editor-panel">
+                    <summary>
+                      Ballon · correction des données existantes
+                    </summary>
+                    <div className="panel-body">
+                      {(["Départ", "Arrivée"] as const).map((label, i) => (
+                        <label key={label}>
+                          {label}
+                          <select
+                            aria-label={`Porteur ${i === 0 ? "au départ" : "à l’arrivée"}`}
+                            value={ballValue(
+                              i === 0
+                                ? step.beforeState.ball
+                                : step.afterState.ball,
+                            )}
+                            onChange={(e) =>
+                              run(() =>
+                                commands.setBall(
                                   draft,
                                   step.id,
-                                  a.id,
-                                  (action) => {
-                                    if (value !== undefined)
-                                      action.order = value;
-                                    else delete action.order;
-                                  },
+                                  ballFrom(e.target.value),
+                                  i === 0,
                                 ),
-                              `order:${a.id}`,
-                            )
-                          }
-                        />
-                      </label>
-                      <label>
-                        Durée (s)
-                        <TimingInput
-                          label={`Durée de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
-                          min={0.1}
-                          max={30}
-                          value={a.durationMs ? a.durationMs / 1000 : undefined}
-                          placeholder="Automatique"
-                          onCommit={(value) =>
-                            run(
-                              () =>
-                                commands.editAction(
-                                  draft,
-                                  step.id,
-                                  a.id,
-                                  (action) => {
-                                    if (value !== undefined)
-                                      action.durationMs = Math.round(
-                                        value * 1000,
-                                      );
-                                    else delete action.durationMs;
-                                  },
-                                ),
-                              `action-duration:${a.id}`,
-                            )
-                          }
-                        />
-                      </label>
-                    </fieldset>
-                  ))}
-                <p>
-                  Durée effective :{" "}
-                  {(
-                    compileStep(
-                      step,
-                      draft.court.coordinateSpace === "stack-raw",
-                    ).duration / 1000
-                  ).toFixed(1)}{" "}
-                  s. Les données tactiques d’origine ne fournissent pas de
-                  timings.
-                </p>
-                <button onClick={() => setPreview(true)}>
-                  Lire cette étape
-                </button>
-              </div>
-            </details>
-            <details className="editor-panel">
-              <summary>Lectures et système</summary>
-              <div className="panel-body">
-                <label>
-                  Nom du système
-                  <input
-                    aria-label="Nom du système"
-                    maxLength={300}
-                    value={draft.name}
-                    onChange={(e) =>
-                      run(
-                        () =>
-                          commands.changePlay(draft, (p) => {
-                            p.name = e.target.value;
-                          }),
-                        "name",
-                      )
-                    }
-                  />
-                </label>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const data = new FormData(e.currentTarget);
-                    try {
-                      const result = commands.addBranch(
-                        draft,
-                        String(data.get("name")),
-                        String(data.get("fork")),
-                      );
-                      apply(result.play);
-                      setScope(result.branchId);
-                      setStepId(result.stepId);
-                      setSelected(null);
-                      e.currentTarget.reset();
-                    } catch (err) {
-                      setError((err as Error).message);
-                    }
-                  }}
-                >
-                  <label>
-                    Nouvelle lecture
-                    <input
-                      aria-label="Nom de la nouvelle lecture"
-                      name="name"
-                      maxLength={100}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Départ après
-                    <select
-                      aria-label="Point de branchement"
-                      name="fork"
-                      defaultValue={
-                        draft.commonSteps.some((s) => s.id === step.id)
-                          ? step.id
-                          : draft.commonSteps.at(-1)?.id
-                      }
-                    >
-                      {draft.commonSteps.map((s, i) => (
-                        <option key={s.id} value={s.id}>
-                          {i + 1}. {s.title}
-                        </option>
+                              )
+                            }
+                          >
+                            <option value="unknown">Non renseigné</option>
+                            <option value="free">Libre</option>
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <option key={n} value={n}>
+                                Joueur {n}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                       ))}
-                    </select>
-                  </label>
-                  <button type="submit">Créer la lecture</button>
-                </form>
-                <p>
-                  Chaque lecture référence le tronc commun sans le dupliquer.
-                </p>
+                      <button
+                        disabled={step.afterState.ball?.mode !== "free"}
+                        onClick={() => {
+                          setSelected({ kind: "ball" });
+                          setTool("select");
+                        }}
+                      >
+                        Déplacer le ballon libre
+                      </button>
+                      <p>
+                        Le ballon attaché suit son porteur. Une passe
+                        optionnelle ne transfère pas la possession.
+                      </p>
+                    </div>
+                  </details>
+                )}
+                <details className="editor-panel">
+                  <summary>Animation · ordre et durée</summary>
+                  <div className="panel-body">
+                    <label>
+                      Durée de l’étape (s)
+                      <TimingInput
+                        label="Durée de l’étape (secondes)"
+                        min={0.1}
+                        max={30}
+                        value={
+                          step.timing
+                            ? step.timing.durationMs / 1000
+                            : undefined
+                        }
+                        placeholder="1,4 par défaut"
+                        onCommit={(value) =>
+                          run(
+                            () =>
+                              commands.changeStep(draft, step.id, (s) => {
+                                if (value !== undefined)
+                                  s.timing = {
+                                    durationMs: Math.round(value * 1000),
+                                  };
+                                else delete s.timing;
+                              }),
+                            `step-duration:${step.id}`,
+                          )
+                        }
+                      />
+                    </label>
+                    <p>
+                      Validez un champ avec Entrée ou en le quittant. Les
+                      actions d’un même groupe commencent ensemble. Les groupes
+                      suivants attendent la fin du précédent. Une durée d’action
+                      explicite peut allonger l’étape.
+                    </p>
+                    {step.actions
+                      .filter(
+                        (a) =>
+                          a.kind !== "annotation" &&
+                          a.geometry.kind !== "legacy-screen" &&
+                          (a.kind !== "pass" || a.status === "confirmed"),
+                      )
+                      .map((a) => (
+                        <fieldset className="action-timing" key={a.id}>
+                          <legend>
+                            {actionNames[a.kind]} ·{" "}
+                            {a.actorId
+                              ? `Joueur ${a.actorId}`
+                              : "Acteur à associer"}
+                          </legend>
+                          <label>
+                            Groupe
+                            <TimingInput
+                              label={`Groupe de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                              min={0}
+                              max={99}
+                              integer
+                              value={a.order}
+                              placeholder="0"
+                              onCommit={(value) =>
+                                run(
+                                  () =>
+                                    commands.editAction(
+                                      draft,
+                                      step.id,
+                                      a.id,
+                                      (action) => {
+                                        if (value !== undefined)
+                                          action.order = value;
+                                        else delete action.order;
+                                      },
+                                    ),
+                                  `order:${a.id}`,
+                                )
+                              }
+                            />
+                          </label>
+                          <label>
+                            Durée (s)
+                            <TimingInput
+                              label={`Durée de ${actionNames[a.kind]} ${step.actions.indexOf(a) + 1}`}
+                              min={0.1}
+                              max={30}
+                              value={
+                                a.durationMs ? a.durationMs / 1000 : undefined
+                              }
+                              placeholder="Automatique"
+                              onCommit={(value) =>
+                                run(
+                                  () =>
+                                    commands.editAction(
+                                      draft,
+                                      step.id,
+                                      a.id,
+                                      (action) => {
+                                        if (value !== undefined)
+                                          action.durationMs = Math.round(
+                                            value * 1000,
+                                          );
+                                        else delete action.durationMs;
+                                      },
+                                    ),
+                                  `action-duration:${a.id}`,
+                                )
+                              }
+                            />
+                          </label>
+                        </fieldset>
+                      ))}
+                    <p>
+                      Durée effective :{" "}
+                      {(
+                        compileStep(
+                          step,
+                          draft.court.coordinateSpace === "stack-raw",
+                        ).duration / 1000
+                      ).toFixed(1)}{" "}
+                      s. Les données tactiques d’origine ne fournissent pas de
+                      timings.
+                    </p>
+                    <button onClick={() => setPreview(true)}>
+                      Lire cette étape
+                    </button>
+                  </div>
+                </details>
+                <details className="editor-panel">
+                  <summary>Lectures et système</summary>
+                  <div className="panel-body">
+                    <label>
+                      Nom du système
+                      <input
+                        aria-label="Nom du système"
+                        maxLength={300}
+                        value={draft.name}
+                        onChange={(e) =>
+                          run(
+                            () =>
+                              commands.changePlay(draft, (p) => {
+                                p.name = e.target.value;
+                              }),
+                            "name",
+                          )
+                        }
+                      />
+                    </label>
+                    <form
+                      key={step.id}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const data = new FormData(e.currentTarget);
+                        try {
+                          const result = commands.addBranch(
+                            draft,
+                            String(data.get("name")),
+                            String(data.get("fork")),
+                          );
+                          apply(result.play);
+                          setScope(result.branchId);
+                          setStepId(result.stepId);
+                          setSelected(null);
+                          e.currentTarget.reset();
+                        } catch (err) {
+                          setError((err as Error).message);
+                        }
+                      }}
+                    >
+                      <label>
+                        Nouvelle lecture
+                        <input
+                          aria-label="Nom de la nouvelle lecture"
+                          name="name"
+                          maxLength={100}
+                          required
+                        />
+                      </label>
+                      <label>
+                        Départ après
+                        <select
+                          aria-label="Point de branchement"
+                          name="fork"
+                          defaultValue={
+                            draft.commonSteps.some((s) => s.id === step.id)
+                              ? step.id
+                              : draft.commonSteps.at(-1)?.id
+                          }
+                        >
+                          {draft.commonSteps.map((s, i) => (
+                            <option key={s.id} value={s.id}>
+                              {i + 1}. {s.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button type="submit">Créer la lecture</button>
+                    </form>
+                    <p>
+                      Chaque lecture référence le tronc commun sans le
+                      dupliquer.
+                    </p>
+                  </div>
+                </details>
               </div>
             </details>
           </div>

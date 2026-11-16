@@ -144,8 +144,9 @@ function step(v: unknown): asserts v is Step {
   record(
     v,
     ["id", "title", "note", "beforeState", "afterState", "actions", "flags"],
-    ["timing"],
+    ["timing", "purpose"],
   );
+  if (v.purpose !== undefined) choice(v.purpose, ["setup"]);
   if (v.timing !== undefined) {
     record(v.timing, ["durationMs"]);
     integer(v.timing.durationMs, 100, 30000);
@@ -241,7 +242,7 @@ export function validatePlay(v: unknown): Play {
     "metadata",
   ]);
   id(v.id);
-  choice(v.schemaVersion, [1, 2, 3]);
+  choice(v.schemaVersion, [1, 2, 3, 4]);
   integer(v.revision, 1);
   iso(v.createdAt);
   iso(v.updatedAt);
@@ -292,7 +293,7 @@ export function validatePlay(v: unknown): Play {
   )
     fail("fonction d’édition nécessitant le schéma 2");
   if (
-    v.schemaVersion !== 3 &&
+    (v.schemaVersion as number) < 3 &&
     allSteps.some(
       (s) =>
         s.timing !== undefined ||
@@ -302,6 +303,16 @@ export function validatePlay(v: unknown): Play {
     )
   )
     fail("timing nécessitant le schéma 3");
+  for (const s of allSteps) {
+    if (
+      s.purpose &&
+      ((v.schemaVersion as number) < 4 ||
+        s !== common[0] ||
+        s.actions.length ||
+        !sameState(s.beforeState, s.afterState))
+    )
+      fail("placement initial invalide ou schéma 4 requis");
+  }
   unique([
     v.id,
     ...v.branches.map((b) => (b as { id: string }).id),

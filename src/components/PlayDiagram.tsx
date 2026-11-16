@@ -1,3 +1,4 @@
+import { CourtEnd } from "./CourtEnd";
 import { useId, type ReactNode, type SVGProps } from "react";
 import type { Play, Point, Step, State } from "../model/types";
 
@@ -113,42 +114,20 @@ export function PlayDiagram({
               width="600"
               height={play.court.kind === "full" ? 1120 : 560}
             />
-            <rect
-              x="277"
-              y="42"
-              width="196"
-              height="232"
-              className="court-key"
-            />
-            <path d="M277 274A98 98 0 0 0 473 274" />
-            <path d="M277 274A98 98 0 0 1 473 274" strokeDasharray="9 9" />
-            <path d="M311 105A64 64 0 0 0 439 105" />
-            <path d="M111 42V169A270 270 0 0 0 639 169V42" />
-            <path d="M326 67H424" strokeWidth="6" />
           </g>
-          <circle
-            cx="375"
-            cy="105"
-            r="9"
-            fill="none"
-            stroke="#b87934"
-            strokeWidth="3"
-          />
+          <CourtEnd />
         </g>
       )}
       {play.court.kind === "full" && !raw && (
-        <g
-          transform="translate(750 1204) rotate(180)"
-          className="historical-lines"
-          fill="none"
-          strokeWidth="3"
-        >
-          <rect x="277" y="42" width="196" height="232" className="court-key" />
-          <path d="M277 274A98 98 0 0 0 473 274M111 42V169A270 270 0 0 0 639 169V42M326 67H424" />
-          <circle cx="375" cy="105" r="9" />
-          <path d="M75 602H675" />
-          <circle cx="375" cy="602" r="72" />
-        </g>
+        <>
+          <g transform="translate(750 1204) rotate(180)">
+            <CourtEnd />
+          </g>
+          <g className="historical-lines" fill="none" strokeWidth="3">
+            <path d="M75 602H675" />
+            <circle cx="375" cy="602" r="72" />
+          </g>
+        </>
       )}
       <g data-layer="paths">
         {paths.map((a) => {
@@ -210,6 +189,7 @@ export function PlayDiagram({
           .map((a) => (
             <text
               key={a.id}
+              data-select-action={a.id}
               x={a.geometry.points[0][0]}
               y={a.geometry.points[0][1]}
               className="court-annotation"
