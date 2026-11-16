@@ -318,15 +318,15 @@ export function Tutorial({ returnHref }: { returnHref: string }) {
             )}
           </li>
           <li>
-            <strong>{t("Image PNG")}</strong>
+            <strong>{t("Tous les visuels PNG (.zip)")}</strong>
             {t(
-              " crée une image de l’étape affichée. Choisis d’abord l’étape que tu veux montrer.",
+              " exporte tous les visuels du play, y compris les lectures, avec un PNG par étape dans un dossier ZIP.",
             )}
           </li>
           <li>
             <strong>{t("PDF du système")}</strong>
             {t(
-              " rassemble toutes les étapes, les notes et les lectures dans un seul document.",
+              " rassemble toutes les étapes et lectures, avec le terrain au premier plan et au maximum deux lignes de consigne par visuel.",
             )}
           </li>
           <li>

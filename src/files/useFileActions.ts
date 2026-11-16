@@ -41,7 +41,10 @@ export function useFileActions(library: Library) {
       setError((e as Error).message);
     }
   }
-  async function graphics(kind: "png" | "pdf", value: ExportStage | Play[]) {
+  async function graphics(
+    kind: "png" | "pdf" | "images",
+    value: ExportStage | Play[],
+  ) {
     if (busy) return;
     setBusy(true);
     setError("");
@@ -56,12 +59,19 @@ export function useFileActions(library: Library) {
               structuredClone(value as ExportStage),
               snapshot,
             )
-          : await exporter.exportPdf(
-              structuredClone(value as Play[]),
-              snapshot,
-              (i, n) => setProgress(t("PDF : {0} / {1} étapes", i, n)),
-              abort.current.signal,
-            );
+          : kind === "images"
+            ? await exporter.exportPlayImages(
+                structuredClone(value as Play[]),
+                snapshot,
+                (i, n) => setProgress(t("Images : {0} / {1} étapes", i, n)),
+                abort.current.signal,
+              )
+            : await exporter.exportPdf(
+                structuredClone(value as Play[]),
+                snapshot,
+                (i, n) => setProgress(t("PDF : {0} / {1} étapes", i, n)),
+                abort.current.signal,
+              );
       if (!abort.current.signal.aborted) deliver(file);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError")

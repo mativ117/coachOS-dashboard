@@ -85,6 +85,7 @@ test("PWA sous chemin du dépôt : édition, présentation, réouverture et expo
   await page
     .getByRole("button", { name: "Exporter en PDF ou image", exact: true })
     .click();
+  await page.getByText("Une seule étape (PNG)", { exact: true }).click();
   let pending = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Exporter le PNG", exact: true })

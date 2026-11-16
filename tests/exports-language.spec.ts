@@ -67,7 +67,7 @@ test("anglais persistant, tuto et filtres utilisables sans modifier les système
     .click();
   await expect(
     page.getByText(
-      "brings all steps, notes and alternative reads into one document.",
+      "includes all steps and alternative reads, with the court taking priority and at most two lines of instructions per diagram.",
       { exact: false },
     ),
   ).toBeVisible();
@@ -138,7 +138,9 @@ test("export direct : étape courante, PDF complet, langue sans perte et présen
   expect(await library(page)).toEqual(before);
   await page.getByRole("button", { name: "Export", exact: true }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog).toContainText("Current step: Courbe au poste haut");
+  await expect(dialog).toContainText(
+    "2 shared steps · 0 reads · 2 steps in total",
+  );
   const originalViewport = page.viewportSize()!;
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -153,7 +155,10 @@ test("export direct : étape courante, PDF complet, langue sans perte et présen
   }
   await page.setViewportSize(originalViewport);
   let pending = page.waitForEvent("download");
-  await dialog.getByRole("button", { name: /PNG image/ }).click();
+  await dialog.getByText("Current step only", { exact: true }).click();
+  await dialog
+    .getByRole("button", { name: "Download this step as PNG", exact: true })
+    .click();
   const png = await pending;
   expect(png.suggestedFilename()).toContain("Courbe-au-poste-haut");
   expect((await bytes(png)).subarray(1, 4).toString()).toBe("PNG");
@@ -195,7 +200,7 @@ test("export sur la carte et sélection limitée aux résultats visibles", async
     .getByRole("button", { name: "Exporter Princeton", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "L’étape affichée : Départ",
+    "11 étapes communes · 0 lectures · 11 étapes au total",
   );
   await page.getByRole("button", { name: "Fermer l’export" }).click();
   await page.getByRole("searchbox").fill("Princeton");

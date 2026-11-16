@@ -3,7 +3,7 @@
 ## Parcours livré
 
 - **Exporter** visible au-dessus du terrain de l’éditeur, dans le lecteur et sur chaque carte de bibliothèque.
-- Une fenêtre commune propose **Image PNG** pour l’étape affichée et **PDF du système** pour toutes les étapes et lectures. Le nom du système et le titre de l’étape indiquent le contexte.
+- Une fenêtre commune propose **PDF du système** et **Tous les visuels PNG (.zip)** pour toutes les étapes et lectures. L’étape isolée reste une option secondaire. Le nom du système et le titre de l’étape indiquent le contexte.
 - L’éditeur exporte son état de travail affiché, même si la sauvegarde locale échoue. Le lecteur se met en pause avant l’ouverture. Le rendu PNG reste celui de l’étape statique, pas une image intermédiaire de l’animation.
 - Téléchargement automatique après préparation, indication du dossier de téléchargement, bouton de partage explicite et téléchargement de repli. Fermer la fenêtre interrompt une préparation ; rouvrir ne montre pas l’ancien résultat.
 - Le fichier modifiable `.coachos` est proposé dans un volet secondaire. La copie JSON de secours rejoint les outils de données ; elle reste disponible directement en cas d’erreur du stockage.

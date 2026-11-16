@@ -20,7 +20,7 @@ Les schémas 1 à 3 restent lisibles ; le schéma 4 ajoute le placement initial 
 
 Les fichiers `.coachos` transportent un système éditable ; `.coachos-backup` sauvegarde toute la bibliothèque, les collections, le profil et les préférences. Chaque import affiche un aperçu : annuler, remplacer ou conserver les deux. Une restauration complète nécessite un choix explicite et garde le précédent état local récupérable. Les copies recâblent leurs identifiants internes.
 
-Le bouton **Exporter**, au-dessus du terrain, dans la présentation et sur chaque carte, propose **Image PNG** de l’étape affichée et **PDF du système** complet. Le fichier est téléchargé ; **Partager le fichier** permet de l’envoyer. Dans la bibliothèque, **Exporter en PDF ou image** permet aussi de regrouper plusieurs systèmes. Les cases de sélection ne sont visibles que dans ce mode. PNG haute résolution de l’étape choisie et PDF de plusieurs systèmes, avec toutes leurs lectures, notes paginées, orientation et profil/équipe/logo. Le partage natif est facultatif, avec téléchargement de repli. Les panneaux repliables gardent un format compact. Le profil reste local ; seuls les exports demandés l’incluent.
+Le bouton **Exporter**, au-dessus du terrain, dans la présentation et sur chaque carte, propose **PDF du système** complet ou **Tous les visuels PNG (.zip)** : une image par étape, toutes les lectures incluses. Le fichier est téléchargé ; **Partager le fichier** permet de l’envoyer. Dans la bibliothèque, **Exporter en PDF ou image** permet aussi de regrouper plusieurs systèmes. Les cases de sélection ne sont visibles que dans ce mode. PNG haute résolution de l’étape choisie et PDF de plusieurs systèmes, avec toutes leurs lectures, consignes courtes, orientation et profil/équipe/logo. Le partage natif est facultatif, avec téléchargement de repli. Les panneaux repliables gardent un format compact. Le profil reste local ; seuls les exports demandés l’incluent.
 
 PWA installable avec manifest et icônes. Attendre **Disponible hors ligne** avant de couper le réseau : édition, présentation, sauvegarde et modules PDF/PNG sont alors mis en cache. Le panneau donne les instructions iPhone/ordinateur et permet de demander la protection du stockage si le navigateur la propose. Une mise à jour attend la fermeture des onglets, sans rechargement automatique.
 
@@ -34,7 +34,7 @@ Le choix **Français / English** est accessible dans l’en-tête et dans **Rég
 
 Choose **English** in the top bar, or under **Settings** in the editor. Create a play, place your players and ball, then add a step and draw movements explicitly. To change possession, select the orange ball first, then the receiving player. **Tutorial** includes a practice court that leaves your library untouched.
 
-Use **Export** above the court, in presentation mode or on a play card. **PNG image** exports the current step; **Full play PDF** includes all steps, notes and alternative reads. Files go to your browser’s downloads; **Share file** lets you send them. Choose **Back up library** to keep an editable full backup. Data stays in this browser on this device; it does not sync across devices.
+Use **Export** above the court, in presentation mode or on a play card. **Full play PDF** includes every step and alternative read, with at most two lines of instructions per diagram. **All PNG diagrams (.zip)** contains one image per step, including all alternative reads. A single step PNG remains available under **Current step only**. Files go to your browser’s downloads; **Share file** lets you send them. Choose **Back up library** to keep an editable full backup. Data stays in this browser on this device; it does not sync across devices.
 
 ## Lancer et vérifier
 
@@ -73,3 +73,5 @@ Les tests couvrent modèles, horloge, géométries, transactions via fake-indexe
 - `docs/CAPACITOR.md` : préparation native ultérieure, sans app native livrée.
 
 Ne pas modifier les sources originales, inventer des déplacements ou déployer avant validation explicite.
+
+L’export privilégie le play complet et ses visuels. Voir `docs/COMPLETE_EXPORT_REVIEW.md`.
