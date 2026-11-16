@@ -12,7 +12,7 @@
     "format:check": "prettier --check src tests scripts *.ts *.json index.html"
   },
   "dependencies": {
-    "fflate": "0.8.2",
+    "fflate": "0.8.3",
     "pdf-lib": "1.17.1",
     "react": "19.3.1",
     "react-dom": "19.3.1"
