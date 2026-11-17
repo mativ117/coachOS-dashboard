@@ -1,3 +1,4 @@
+import { editorHref } from "./library/resume";
 import { LanguagePicker } from "./i18n/LanguagePicker";
 import { t, useLocale } from "./i18n";
 import { Tutorial } from "./tutorial/Tutorial";
@@ -35,6 +36,7 @@ function readRoute() {
   };
 }
 const href = (space: Space, play?: Play) => {
+  if (space === "editor" && play) return editorHref(play);
   const query = new URLSearchParams();
   if (play) query.set("play", play.id);
   if (space === "tutorial") {

@@ -1,3 +1,5 @@
+import { continuation, editorHref, readResumes } from "../library/resume";
+import { readFilters, rememberFilters } from "../library/filters";
 import { t } from "../i18n";
 import { ExportControl } from "./ExportControl";
 import { downloadEmergency } from "../import-export/emergency";
@@ -46,9 +48,15 @@ export function LibraryWorkspace({
     }
   }
 
-  const [query, setQuery] = useState(""),
-    [filter, setFilter] = useState("Tous les systèmes"),
-    [collection, setCollection] = useState("all");
+  const [query, setQuery] = useState(() => readFilters(view).query),
+    [filter, setFilter] = useState(() => readFilters(view).filter),
+    [collection, setCollection] = useState(() => readFilters(view).collection),
+    [sort, setSort] = useState(() => readFilters(view).sort);
+  useEffect(
+    () => rememberFilters({ view, query, filter, collection, sort }),
+    [view, query, filter, collection, sort],
+  );
+  const resumeEntries = readResumes();
   const [selected, setSelected] = useState<string[]>([]);
   const [deleted, setDeleted] = useState<{
     name: string;
@@ -99,24 +107,37 @@ export function LibraryWorkspace({
     setPngScale(library.preferences.pngScale ?? 2);
   }, [settingsKey]);
   const writable = status === "saved" && !reading && !settingsBusy;
-  const filtered = library.plays.filter(
-    (p) =>
-      (view === "all" ||
-        (view === "examples"
-          ? library.examplePlayIds?.includes(p.id)
-          : !library.examplePlayIds?.includes(p.id))) &&
-      `${p.name} ${p.metadata.description}`
-        .toLocaleLowerCase("fr")
-        .includes(query.toLocaleLowerCase("fr")) &&
-      (filter === "Tous les systèmes" ||
-        (filter === "Brouillons"
-          ? p.status === "draft"
-          : p.metadata.category === filter)) &&
-      (collection === "all" ||
-        library.collections
-          .find((c) => c.id === collection)
-          ?.playIds.includes(p.id)),
-  );
+  const filtered = library.plays
+    .filter(
+      (p) =>
+        (view === "all" ||
+          (view === "examples"
+            ? library.examplePlayIds?.includes(p.id)
+            : !library.examplePlayIds?.includes(p.id))) &&
+        `${p.name} ${p.metadata.description}`
+          .toLocaleLowerCase("fr")
+          .includes(query.toLocaleLowerCase("fr")) &&
+        (filter === "Tous les systèmes" ||
+          (filter === "Brouillons"
+            ? p.status === "draft"
+            : p.metadata.category === filter)) &&
+        (collection === "all" ||
+          library.collections
+            .find((c) => c.id === collection)
+            ?.playIds.includes(p.id)),
+    )
+    .sort((a, b) =>
+      sort === "name"
+        ? a.name.localeCompare(b.name)
+        : Math.max(
+            Date.parse(b.updatedAt) || 0,
+            continuation(b, resumeEntries)?.openedAt ?? 0,
+          ) -
+          Math.max(
+            Date.parse(a.updatedAt) || 0,
+            continuation(a, resumeEntries)?.openedAt ?? 0,
+          ),
+    );
   const chosenPlay =
     library.plays.find((p) => p.id === pngPlay) ?? library.plays[0];
   const entries = chosenPlay
@@ -513,7 +534,33 @@ export function LibraryWorkspace({
             ))}
           </select>
         </label>
+        <label className="filter">
+          <span className="sr-only">{t("Trier les plays")}</span>
+          <select
+            aria-label={t("Trier les plays")}
+            value={sort}
+            onChange={(e) =>
+              setSort(e.target.value === "name" ? "name" : "recent")
+            }
+          >
+            <option value="recent">{t("Récents d’abord")}</option>
+            <option value="name">{t("Nom A → Z")}</option>
+          </select>
+        </label>
       </div>
+      {filtered.length > 0 &&
+        (query || filter !== "Tous les systèmes" || collection !== "all") && (
+          <button
+            className="clear-library-filters"
+            onClick={() => {
+              setQuery("");
+              setFilter("Tous les systèmes");
+              setCollection("all");
+            }}
+          >
+            {t("Effacer les filtres")}
+          </button>
+        )}
       <div className="section-heading">
         <h2>
           {t(
@@ -543,137 +590,159 @@ export function LibraryWorkspace({
         {filtered.length} {t("systèmes affichés")}
       </p>
       <div className="play-grid">
-        {filtered.map((p) => (
-          <article className="play-card" key={p.id}>
-            <div className="card-preview">
-              {p.commonSteps[0] ? (
-                <PlayDiagram play={p} step={p.commonSteps[0]} miniature />
-              ) : (
-                <Court miniature />
-              )}
-              <span
-                className={`card-status ${p.status === "draft" || p.status === "needs-review" ? "draft" : ""}`}
-              >
-                {p.status === "draft"
-                  ? t("Brouillon")
-                  : p.status === "needs-review"
-                    ? t("À confirmer")
-                    : p.status === "edited"
-                      ? t("Modifié")
-                      : t("Importé")}
-              </span>
-            </div>
-            <div className="card-body">
-              <div className="card-category">{t(p.metadata.category)}</div>
-              <h3>{p.name}</h3>
-              <p>{p.metadata.description}</p>
-              <div className="card-bottom">
-                <ExportControl
-                  library={library}
-                  play={p}
-                  step={p.commonSteps[0]}
-                  label={t("Exporter {0}", p.name)}
-                />
-
-                <a
-                  href={`#/editor?play=${encodeURIComponent(p.id)}`}
-                  aria-label={t("Ouvrir {0}", p.name)}
-                >
-                  {t("Ouvrir ")}
-                  <Arrow />
-                </a>
-                {showFiles && (
-                  <label className="card-select">
-                    <input
-                      type="checkbox"
-                      aria-label={t("Sélectionner {0}", p.name)}
-                      checked={selected.includes(p.id)}
-                      onChange={(e) =>
-                        setSelected((s) =>
-                          e.target.checked
-                            ? [...s, p.id]
-                            : s.filter((id) => id !== p.id),
-                        )
-                      }
-                    />
-                    {t("Choisir pour le PDF")}
-                  </label>
+        {filtered.map((p) => {
+          const saved = continuation(p, resumeEntries);
+          return (
+            <article className="play-card" key={p.id}>
+              <div className="card-preview">
+                {p.commonSteps[0] ? (
+                  <PlayDiagram
+                    play={p}
+                    step={saved?.step ?? p.commonSteps[0]}
+                    miniature
+                  />
+                ) : (
+                  <Court miniature />
                 )}
+                <span
+                  className={`card-status ${p.status === "draft" || p.status === "needs-review" ? "draft" : ""}`}
+                >
+                  {p.status === "draft"
+                    ? t("Brouillon")
+                    : p.status === "needs-review"
+                      ? t("À confirmer")
+                      : p.status === "edited"
+                        ? t("Modifié")
+                        : t("Importé")}
+                </span>
               </div>
-              <details className="card-menu">
-                <summary>{t("Options du système")}</summary>
-                <div>
-                  <button onClick={() => io.system(p)}>
-                    {t("Exporter .coachos")}
-                  </button>
+              <div className="card-body">
+                <div className="card-category">{t(p.metadata.category)}</div>
+                <h3>{p.name}</h3>
+                <p>{p.metadata.description}</p>
+                {saved && (
+                  <p className="resume-caption">
+                    {t("Reprise : étape {0}", saved.index + 1)} ·{" "}
+                    {saved.step.title}
+                    {saved.branch ? ` · ${saved.branch.name}` : ""}
+                  </p>
+                )}
+                <div className="card-bottom">
+                  <ExportControl
+                    library={library}
+                    play={p}
+                    step={saved?.step ?? p.commonSteps[0]}
+                    label={t("Exporter {0}", p.name)}
+                  />
 
-                  <button
-                    disabled={!writable}
-                    onClick={() => {
-                      try {
-                        void operation(duplicateInLibrary(library, p.id)).then(
-                          (saved) => {
+                  <a
+                    href={editorHref(p)}
+                    aria-label={t(
+                      saved ? "Reprendre {0}" : "Ouvrir {0}",
+                      p.name,
+                    )}
+                  >
+                    {t(saved ? "Reprendre " : "Ouvrir ")}
+                    <Arrow />
+                  </a>
+                  {showFiles && (
+                    <label className="card-select">
+                      <input
+                        type="checkbox"
+                        aria-label={t("Sélectionner {0}", p.name)}
+                        checked={selected.includes(p.id)}
+                        onChange={(e) =>
+                          setSelected((s) =>
+                            e.target.checked
+                              ? [...s, p.id]
+                              : s.filter((id) => id !== p.id),
+                          )
+                        }
+                      />
+                      {t("Choisir pour le PDF")}
+                    </label>
+                  )}
+                </div>
+                <details className="card-menu">
+                  <summary>{t("Options du système")}</summary>
+                  <div>
+                    <button onClick={() => io.system(p)}>
+                      {t("Exporter .coachos")}
+                    </button>
+
+                    <button
+                      disabled={!writable}
+                      onClick={() => {
+                        try {
+                          void operation(
+                            duplicateInLibrary(library, p.id),
+                          ).then((saved) => {
                             if (saved && library.examplePlayIds?.includes(p.id))
                               changeView("personal");
-                          },
-                        );
-                      } catch (e) {
-                        io.setError((e as Error).message);
-                      }
-                    }}
-                  >
-                    {t(
-                      library.examplePlayIds?.includes(p.id)
-                        ? "Copier dans mes plays"
-                        : "Dupliquer",
-                    )}
-                  </button>
-                  <button
-                    className="danger-button"
-                    disabled={!writable || io.busy}
-                    onClick={() => {
-                      void deletePlay(p.id, p.name);
-                    }}
-                  >
-                    {t("Supprimer le play")}
-                  </button>
-                  <fieldset>
-                    <legend>{t("Collections")}</legend>
-                    {library.collections.map((c) => (
-                      <label className="checkbox-label" key={c.id}>
-                        <input
-                          type="checkbox"
-                          aria-label={t("{0} dans {1}", p.name, c.name)}
-                          checked={c.playIds.includes(p.id)}
-                          disabled={!writable}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            void operation({
-                              ...library,
-                              collections: library.collections.map((other) =>
-                                other.id === c.id
-                                  ? {
-                                      ...other,
-                                      playIds: checked
-                                        ? [...new Set([...other.playIds, p.id])]
-                                        : other.playIds.filter(
-                                            (id) => id !== p.id,
-                                          ),
-                                    }
-                                  : other,
-                              ),
-                            });
-                          }}
-                        />
-                        {c.name}
-                      </label>
-                    ))}
-                  </fieldset>
-                </div>
-              </details>
-            </div>
-          </article>
-        ))}
+                          });
+                        } catch (e) {
+                          io.setError((e as Error).message);
+                        }
+                      }}
+                    >
+                      {t(
+                        library.examplePlayIds?.includes(p.id)
+                          ? "Copier dans mes plays"
+                          : "Dupliquer",
+                      )}
+                    </button>
+                    <button
+                      className="danger-button"
+                      disabled={!writable || io.busy}
+                      onClick={() => {
+                        void deletePlay(p.id, p.name);
+                      }}
+                    >
+                      {t("Supprimer le play")}
+                    </button>
+                    <fieldset>
+                      <legend>{t("Collections")}</legend>
+                      {library.collections.map((c) => (
+                        <label className="checkbox-label" key={c.id}>
+                          <input
+                            type="checkbox"
+                            aria-label={t("{0} dans {1}", p.name, c.name)}
+                            checked={c.playIds.includes(p.id)}
+                            disabled={!writable}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              void operation({
+                                ...library,
+                                collections: library.collections.map((other) =>
+                                  other.id === c.id
+                                    ? {
+                                        ...other,
+                                        playIds: checked
+                                          ? [
+                                              ...new Set([
+                                                ...other.playIds,
+                                                p.id,
+                                              ]),
+                                            ]
+                                          : other.playIds.filter(
+                                              (id) => id !== p.id,
+                                            ),
+                                      }
+                                    : other,
+                                ),
+                              });
+                            }}
+                          />
+                          {c.name}
+                        </label>
+                      ))}
+                    </fieldset>
+                  </div>
+                </details>
+              </div>
+            </article>
+          );
+        })}
       </div>
       {view === "personal" && !filtered.length && (
         <button onClick={() => changeView("examples")}>
