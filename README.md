@@ -77,3 +77,5 @@ Ne pas modifier les sources originales, inventer des déplacements ou déployer 
 L’export privilégie le play complet et ses visuels. Voir `docs/COMPLETE_EXPORT_REVIEW.md`.
 
 Audit UX documenté : `docs/UX_AUDIT_2026_11.md`. La validation de passe et la saisie d’annotation sont placées avant le terrain ; les flèches parcourent les étapes. Import et sauvegarde sont regroupés dans **Importer et sauvegarder**, et les informations des plays de départ sont repliables. Les gestes de dessin et le modèle tactique sont conservés.
+
+Pour supprimer un play : **Options du système → Supprimer le play** sur sa carte. Une confirmation précède la suppression de ses étapes et lectures ; ses références sont retirées des collections. **Annuler la suppression** restaure aussi ces références tant qu’aucune nouvelle modification n’a été enregistrée. Après rechargement, l’état précédent reste récupérable via les outils de bibliothèque.

@@ -29,6 +29,10 @@ export function LibraryWorkspace({
     [filter, setFilter] = useState("Tous les systèmes"),
     [collection, setCollection] = useState("all");
   const [selected, setSelected] = useState<string[]>([]);
+  const [deleted, setDeleted] = useState<{
+    name: string;
+    revision: number;
+  } | null>(null);
   const [incoming, setIncoming] = useState<{
     data: Incoming;
     recovery?: boolean;
@@ -115,6 +119,54 @@ export function LibraryWorkspace({
       await commit(validateLibrary(next), library.revision, preserve);
     } catch (e) {
       io.setError(e instanceof Error ? e.message : "Opération impossible.");
+    }
+  }
+  async function deletePlay(id: string, name: string) {
+    if (
+      !writable ||
+      io.busy ||
+      !confirm(
+        t(
+          "Supprimer le play « {0} » avec toutes ses étapes et lectures ? Il sera aussi retiré des collections.",
+          name,
+        ),
+      )
+    )
+      return;
+    try {
+      io.setError("");
+      io.setMessage("");
+      const next = validateLibrary({
+        ...library,
+        plays: library.plays.filter((p) => p.id !== id),
+        collections: library.collections.map((c) => ({
+          ...c,
+          playIds: c.playIds.filter((playId) => playId !== id),
+        })),
+      });
+      await commit(next, library.revision, true);
+      setDeleted({ name, revision: library.revision + 1 });
+    } catch (e) {
+      io.setError(e instanceof Error ? e.message : t("Opération impossible."));
+    }
+  }
+  async function undoDelete() {
+    if (
+      !deleted ||
+      deleted.revision !== library.revision ||
+      !writable ||
+      io.busy
+    )
+      return;
+    try {
+      io.setError("");
+      const previous = await readRecovery();
+      if (!previous) throw new Error(t("Aucun état précédent disponible."));
+      await commit(previous, deleted.revision, false);
+      setDeleted(null);
+      io.setMessage(t("Suppression annulée."));
+    } catch (e) {
+      io.setError(e instanceof Error ? e.message : t("Opération impossible."));
     }
   }
   async function read(file: File) {
@@ -324,6 +376,20 @@ export function LibraryWorkspace({
           {t(io.message)}
         </p>
       )}
+      {deleted?.revision === library.revision && (
+        <div className="delete-feedback" role="status">
+          <span>{t("Play « {0} » supprimé.", deleted.name)}</span>
+          <button
+            autoFocus
+            disabled={!writable || io.busy}
+            onClick={() => {
+              void undoDelete();
+            }}
+          >
+            {t("Annuler la suppression de {0}", deleted.name)}
+          </button>
+        </div>
+      )}
       {io.result && (
         <div className="last-file">
           <span>
@@ -470,6 +536,15 @@ export function LibraryWorkspace({
                     }}
                   >
                     {t("Dupliquer")}
+                  </button>
+                  <button
+                    className="danger-button"
+                    disabled={!writable || io.busy}
+                    onClick={() => {
+                      void deletePlay(p.id, p.name);
+                    }}
+                  >
+                    {t("Supprimer le play")}
                   </button>
                   <fieldset>
                     <legend>{t("Collections")}</legend>
