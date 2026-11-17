@@ -3005,3 +3005,103 @@ main {
 .editor-settings .language-picker {
   margin: 0.5rem 0;
 }
+/* UX audit: keep routine controls next to the court, details on request. */
+.library-intro.notice {
+  display: block;
+  padding: 0;
+  margin: 14px 0;
+}
+.library-intro > summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  min-height: 44px;
+  font-size: 13px;
+}
+.library-intro > p {
+  padding: 0 16px 12px;
+}
+.library-intro .notice-icon {
+  display: none;
+}
+.library-more > summary {
+  min-height: 44px;
+  padding: 12px;
+  cursor: pointer;
+  border: 1px solid #cbd9eb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.library-more-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0;
+}
+.step-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.step-navigation button {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.step-navigation span {
+  font-size: 12px;
+  text-align: center;
+  color: #415b7d;
+}
+.board-context {
+  padding: 10px 12px;
+  margin: 8px 0;
+  border: 1px solid #c6d9f4;
+  border-radius: 10px;
+  background: #edf4ff;
+  color: #123766;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.annotation-context {
+  display: grid;
+  gap: 6px;
+}
+.annotation-context input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid #b5cbe8;
+  border-radius: 7px;
+}
+.pass-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.pass-context .checkbox-label {
+  min-height: 44px;
+}
+.pass-context > span:last-child {
+  flex-basis: 100%;
+}
+@media (max-width: 400px) {
+  .step-navigation {
+    gap: 4px;
+  }
+  .step-navigation button {
+    font-size: 11px;
+    padding: 7px;
+  }
+}
+.timeline-top .step-navigation {
+  margin-bottom: 0;
+  flex: 1;
+  justify-content: flex-start;
+}
+.timeline-top .step-navigation button {
+  min-width: 44px;
+  font-size: 18px;
+}

@@ -164,13 +164,21 @@ export function LibraryWorkspace({
         >
           {t("Exporter en PDF ou image")}
         </button>
-        <button
-          disabled={!writable || io.busy}
-          onClick={() => fileInput.current?.click()}
-        >
-          {reading ? t("Lecture du fichier…") : t("Importer un fichier")}
-        </button>
-        <button onClick={io.backup}>{t("Sauvegarder la bibliothèque")}</button>
+        <details className="library-more">
+          <summary>{t("Importer et sauvegarder")}</summary>
+          <div className="library-more-actions">
+            {" "}
+            <button
+              disabled={!writable || io.busy}
+              onClick={() => fileInput.current?.click()}
+            >
+              {reading ? t("Lecture du fichier…") : t("Importer un fichier")}
+            </button>
+            <button onClick={io.backup}>
+              {t("Sauvegarder la bibliothèque")}
+            </button>
+          </div>
+        </details>
         <input
           ref={fileInput}
           aria-label={t("Fichier CoachOS à importer")}

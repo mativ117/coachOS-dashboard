@@ -254,7 +254,8 @@ export function App() {
                   {createError && <p role="alert">{t(createError)}</p>}
                 </form>
               )}
-              <div className="notice">
+              <details className="notice library-intro">
+                <summary>{t("À propos des systèmes de départ")}</summary>
                 <span className="notice-icon" aria-hidden="true">
                   {t("i")}
                 </span>
@@ -264,7 +265,7 @@ export function App() {
                     "Les cinq systèmes OWLS et Stack sont disponibles en lecture et en édition. Les données sont locales à ce navigateur. Stack reste à confirmer ; Baseline et Losange attendent leurs premières étapes.",
                   )}
                 </p>
-              </div>
+              </details>
               <LibraryWorkspace
                 library={library}
                 status={status}

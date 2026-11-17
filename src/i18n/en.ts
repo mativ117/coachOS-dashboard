@@ -1,4 +1,22 @@
 export default {
+  "Une passe dessinée est d’abord une option. Juste au-dessus du terrain, coche":
+    "A drawn pass starts as an option. Just above the court, check",
+  "Parcourir les étapes": "Browse steps",
+  "Étape précédente": "Previous step",
+  "Étape suivante": "Next step",
+  "Étape {0} sur {1}": "Step {0} of {1}",
+  "Ballon sélectionné : touche un joueur pour lui donner le ballon, ou un endroit vide pour le poser.":
+    "Ball selected: tap a player to give them the ball, or an empty spot to place it.",
+  "Écris ici, puis touche le terrain pour placer le texte.":
+    "Type here, then tap the court to place the text.",
+  "Passe {0} → {1}": "Pass {0} → {1}",
+  "Le ballon sera transmis pendant la lecture.":
+    "The ball will transfer during playback.",
+  "Option dessinée : active-la pour transmettre le ballon pendant la lecture.":
+    "Drawn option: enable it to transfer the ball during playback.",
+  "Importer et sauvegarder": "Import and back up",
+  "À propos des systèmes de départ": "About the starter plays",
+
   "Tous les PNG de la sélection (.zip)": "All PNGs for selected plays (.zip)",
   "Une seule étape (PNG)": "Single step only (PNG)",
   "+ Nouveau système": "+ New play",
@@ -638,8 +656,8 @@ export default {
   "Retrouve le fichier dans les téléchargements du navigateur, ou utilise « Partager le fichier » pour l’envoyer.":
     "Find the file in your browser’s downloads, or choose “Share file” to send it.",
   "Copie modifiable et sauvegarde complète": "Editable copy and full backup",
-  "Dans Exporter, ouvre « Garder un système modifiable dans CoachOS » pour obtenir un fichier .coachos. Dans la bibliothèque, « Sauvegarder la bibliothèque » conserve tous tes systèmes et réglages pour les réimporter sur un autre appareil.":
-    "In Export, open “Keep an editable play for CoachOS” to get a .coachos file. In the library, “Back up library” keeps all your plays and settings so you can import them on another device.",
+  "Dans Exporter, ouvre « Garder un système modifiable dans CoachOS » pour obtenir un fichier .coachos. Dans la bibliothèque, ouvre « Importer et sauvegarder », puis choisis « Sauvegarder la bibliothèque » pour conserver tous tes systèmes et réglages.":
+    "In Export, open “Keep an editable play for CoachOS” to get a .coachos file. In the library, open “Import and back up”, then choose “Back up library” to keep all your plays and settings.",
   "Pour réunir plusieurs systèmes dans un PDF, ouvre « Exporter en PDF ou image » dans la bibliothèque, choisis les systèmes puis « PDF de la sélection ».":
     "To combine plays in one PDF, open “Export PDF or image” in the library, choose your plays, then select “Selected plays PDF”.",
   "Exporter {0}": "Export {0}",

@@ -100,6 +100,7 @@ test("PWA sous chemin du dépôt : édition, présentation, réouverture et expo
     .click();
   expect((await pending).suggestedFilename()).toMatch(/\.pdf$/);
   pending = page.waitForEvent("download");
+  await page.getByText("Importer et sauvegarder", { exact: true }).click();
   await page
     .getByRole("button", { name: "Sauvegarder la bibliothèque", exact: true })
     .click();

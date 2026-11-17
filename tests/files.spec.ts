@@ -147,6 +147,7 @@ test("sauvegarde complète, aperçu de restauration et récupération de l’ét
     .click();
   await ready(page);
   const pending = page.waitForEvent("download");
+  await page.getByText("Importer et sauvegarder", { exact: true }).click();
   await page
     .getByRole("button", { name: "Sauvegarder la bibliothèque", exact: true })
     .click();
