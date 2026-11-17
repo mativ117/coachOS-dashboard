@@ -1,4 +1,11 @@
 export default {
+  "Supprimer le play": "Delete play",
+  "Supprimer le play « {0} » avec toutes ses étapes et lectures ? Il sera aussi retiré des collections.":
+    "Delete play “{0}” with all its steps and reads? It will also be removed from collections.",
+  "Play « {0} » supprimé.": "Play “{0}” deleted.",
+  "Annuler la suppression de {0}": "Undo deletion of {0}",
+  "Suppression annulée.": "Deletion undone.",
+
   "Une passe dessinée est d’abord une option. Juste au-dessus du terrain, coche":
     "A drawn pass starts as an option. Just above the court, check",
   "Parcourir les étapes": "Browse steps",

@@ -3105,3 +3105,32 @@ main {
   min-width: 44px;
   font-size: 18px;
 }
+.delete-feedback {
+  position: fixed;
+  z-index: 40;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 24px));
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #123766;
+  border: 1px solid #b5cbe8;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px #12376633;
+}
+.delete-feedback span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.delete-feedback button {
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

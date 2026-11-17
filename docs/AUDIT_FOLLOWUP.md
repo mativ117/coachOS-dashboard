@@ -17,7 +17,7 @@ Le premier lot validé porte sur le terrain/cadrage et la simplification de l’
 | E06 | Rotation de vue et miroir tactique | À proposer ; aucune transformation tactique ajoutée |
 | B01 | Sélection limitée aux résultats filtrés | Corrigé : résultats filtrés et bibliothèque entière sont deux choix explicites |
 | B02 | Séparer catégorie tactique et format | À proposer |
-| B03 | Archivage/suppression de système | À proposer |
+| B03 | Archivage/suppression de système | Suppression avec confirmation, nettoyage des références et annulation ajoutés ; archivage reste à proposer |
 | B04 | Recherche, tri et gros volumes | À proposer et mesurer sur appareil réel |
 | D01 | Backup exportable à la taille maximale du stockage | À corriger dans le lot fiabilité : limites compact/JSON indenté incohérentes |
 | D02 | Conflits entre onglets | Protection par révision conservée ; récupération plus simple à proposer |
