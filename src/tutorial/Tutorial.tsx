@@ -55,6 +55,11 @@ export function Tutorial({ returnHref }: { returnHref: string }) {
         </span>
         <h2>{t("Commencer par le placement")}</h2>
         <p>
+          {t(
+            "La bibliothèque s’ouvre sur Mes plays. Exemples contient les systèmes fournis ; Copier dans mes plays crée une copie complète à adapter.",
+          )}
+        </p>
+        <p>
           {t("Dans ")}
           <strong>{t("Bibliothèque")}</strong>
           {t(", choisis")} <strong>{t("+ Nouveau système")}</strong>
@@ -167,6 +172,11 @@ export function Tutorial({ returnHref }: { returnHref: string }) {
           {t("4")}
         </span>
         <h2>{t("Dessiner les mouvements et les passes")}</h2>
+        <p>
+          {t(
+            "Type de tracé permet de choisir main levée, droite (2 appuis), courbe (3 appuis), écran fixe ou déplacement d’écran. Ces outils sont disponibles dès Placement. Le premier dessin conserve les positions de départ et transforme Placement en étape d’action.",
+          )}
+        </p>
         <dl className="tutorial-tools">
           <div>
             <dt>{t("Tracer · un mouvement")}</dt>

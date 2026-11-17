@@ -52,18 +52,19 @@ test("placement explicite versionné : ni action ni insertion arbitraire", () =>
   const moved = structuredClone(p);
   moved.commonSteps[0].afterState.players["1"] = [100, 100];
   expect(() => validatePlay(moved)).toThrow();
-  expect(() =>
-    c.addAction(
-      p,
-      p.commonSteps[0].id,
-      "run",
-      [
-        [375, 440],
-        [300, 300],
-      ],
-      "1",
-    ),
-  ).toThrow();
+  const drawn = c.addAction(
+    p,
+    p.commonSteps[0].id,
+    "run",
+    [
+      [375, 440],
+      [300, 300],
+    ],
+    "1",
+  ).play;
+  expect(drawn.commonSteps[0].purpose).toBeUndefined();
+  expect(drawn.initialState).toEqual(p.initialState);
+  expect(drawn.commonSteps[0].actions).toHaveLength(1);
   const ordinary = c.initialize(c.createPlay("Compatibilité"));
   expect(ordinary.schemaVersion).toBe(2);
   expect(ordinary.commonSteps[0].purpose).toBeUndefined();

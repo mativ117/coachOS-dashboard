@@ -299,7 +299,7 @@ export function addAction(
   recipientId?: string,
   curved = false,
   note?: string,
-  shape?: "polyline",
+  shape?: "polyline" | "legacy-screen",
 ): { play: Play; actionId: string } {
   const id = key("action");
   const p = changeStep(play, stepId, (s) => {
@@ -308,6 +308,7 @@ export function addAction(
       (!actorId || !recipientId || actorId === recipientId)
     )
       throw new Error("Sélectionnez deux joueurs distincts pour la passe.");
+    delete s.purpose;
     const a: Action = {
       id,
       kind,
@@ -321,7 +322,7 @@ export function addAction(
       status:
         kind === "pass"
           ? "optional"
-          : actorId || kind === "annotation"
+          : shape === "legacy-screen" || actorId || kind === "annotation"
             ? "recorded"
             : "unassigned",
     };
@@ -329,7 +330,11 @@ export function addAction(
     if (recipientId) a.recipientId = recipientId;
     if (note !== undefined) a.text = note;
     s.actions.push(a);
-    if (actorId && ["run", "cut", "screen"].includes(kind))
+    if (
+      shape !== "legacy-screen" &&
+      actorId &&
+      ["run", "cut", "screen"].includes(kind)
+    )
       s.afterState.players[actorId] = copy(points.at(-1)!);
   });
   return { play: p, actionId: id };
@@ -356,6 +361,7 @@ export function editPoint(
   return editAction(play, stepId, actionId, (a, s) => {
     a.geometry.points[index] = copy(point);
     if (
+      a.geometry.kind !== "legacy-screen" &&
       index === a.geometry.points.length - 1 &&
       a.actorId &&
       ["run", "cut", "screen"].includes(a.kind)

@@ -1,4 +1,30 @@
 export default {
+  "Type de tracé permet de choisir main levée, droite (2 appuis), courbe (3 appuis), écran fixe ou déplacement d’écran. Ces outils sont disponibles dès Placement. Le premier dessin conserve les positions de départ et transforme Placement en étape d’action.":
+    "Drawing type offers freehand, straight lines (2 taps), curves (3 taps), stationary screens and screen movements. All tools are available from Setup. The first drawing keeps the starting positions and turns Setup into an action step.",
+  "La bibliothèque s’ouvre sur Mes plays. Exemples contient les systèmes fournis ; Copier dans mes plays crée une copie complète à adapter.":
+    "The library starts with My plays. Examples contains the supplied plays; Copy to my plays creates a complete copy you can adapt.",
+
+  "Déplacement d’écran courbe": "Curved screen movement",
+  "Mes plays": "My plays",
+  Exemples: "Examples",
+  "Tous les plays": "All plays",
+  "Afficher les plays": "Show plays",
+  "Voir les exemples": "View examples",
+  "Copier dans mes plays": "Copy to my plays",
+  "Type de tracé": "Drawing type",
+  "Main levée": "Freehand",
+  Droite: "Straight line",
+  "Écran fixe": "Stationary screen",
+  "Déplacement d’écran manuel": "Freehand screen movement",
+  "Déplacement d’écran droit": "Straight screen movement",
+  "Deux appuis : départ puis arrivée.": "Two taps: start, then end.",
+  "Touche un joueur ou le terrain pour poser un écran sans déplacement.":
+    "Tap a player or the court to place a screen without movement.",
+  "Deux appuis : départ du poseur puis arrivée.":
+    "Two taps: screener’s start, then end.",
+  "Placez les joueurs et le ballon. Vous pouvez dessiner ici ou ajouter une étape.":
+    "Place the players and ball. Draw here or add a step.",
+
   "Supprimer le play": "Delete play",
   "Supprimer le play « {0} » avec toutes ses étapes et lectures ? Il sera aussi retiré des collections.":
     "Delete play “{0}” with all its steps and reads? It will also be removed from collections.",

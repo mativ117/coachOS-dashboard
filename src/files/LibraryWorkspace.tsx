@@ -25,6 +25,27 @@ export function LibraryWorkspace({
   readRecovery,
 }: Props) {
   const io = useFileActions(library);
+  const [view, setView] = useState<"personal" | "examples" | "all">(() => {
+    try {
+      const value = localStorage.getItem("coachos.library.view");
+      return value === "all" || value === "examples" ? value : "personal";
+    } catch {
+      return "personal";
+    }
+  });
+  function changeView(value: "personal" | "examples" | "all") {
+    setView(value);
+    setSelected([]);
+    setQuery("");
+    setFilter("Tous les systèmes");
+    setCollection("all");
+    try {
+      localStorage.setItem("coachos.library.view", value);
+    } catch {
+      /* Session-only preference. */
+    }
+  }
+
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState("Tous les systèmes"),
     [collection, setCollection] = useState("all");
@@ -80,6 +101,10 @@ export function LibraryWorkspace({
   const writable = status === "saved" && !reading && !settingsBusy;
   const filtered = library.plays.filter(
     (p) =>
+      (view === "all" ||
+        (view === "examples"
+          ? library.examplePlayIds?.includes(p.id)
+          : !library.examplePlayIds?.includes(p.id))) &&
       `${p.name} ${p.metadata.description}`
         .toLocaleLowerCase("fr")
         .includes(query.toLocaleLowerCase("fr")) &&
@@ -117,8 +142,10 @@ export function LibraryWorkspace({
     try {
       io.setError("");
       await commit(validateLibrary(next), library.revision, preserve);
+      return true;
     } catch (e) {
       io.setError(e instanceof Error ? e.message : "Opération impossible.");
+      return false;
     }
   }
   async function deletePlay(id: string, name: string) {
@@ -139,6 +166,13 @@ export function LibraryWorkspace({
       const next = validateLibrary({
         ...library,
         plays: library.plays.filter((p) => p.id !== id),
+        ...(library.examplePlayIds
+          ? {
+              examplePlayIds: library.examplePlayIds.filter(
+                (example) => example !== id,
+              ),
+            }
+          : {}),
         collections: library.collections.map((c) => ({
           ...c,
           playIds: c.playIds.filter((playId) => playId !== id),
@@ -209,6 +243,38 @@ export function LibraryWorkspace({
       className="library-workspace"
       aria-label={t("Bibliothèque et fichiers")}
     >
+      <div
+        className="library-views"
+        role="group"
+        aria-label={t("Afficher les plays")}
+      >
+        {(["personal", "examples", "all"] as const).map((value) => (
+          <button
+            key={value}
+            aria-pressed={view === value}
+            onClick={() => changeView(value)}
+          >
+            {t(
+              value === "personal"
+                ? "Mes plays"
+                : value === "examples"
+                  ? "Exemples"
+                  : "Tous les plays",
+            )}{" "}
+            (
+            {
+              library.plays.filter(
+                (p) =>
+                  value === "all" ||
+                  (value === "examples"
+                    ? library.examplePlayIds?.includes(p.id)
+                    : !library.examplePlayIds?.includes(p.id)),
+              ).length
+            }
+            )
+          </button>
+        ))}
+      </div>
       <div className="library-filebar">
         <button
           onClick={() => setShowFiles((v) => !v)}
@@ -450,8 +516,24 @@ export function LibraryWorkspace({
       </div>
       <div className="section-heading">
         <h2>
-          {t("Mes systèmes ")}
-          <span className="count">{library.plays.length}</span>
+          {t(
+            view === "personal"
+              ? "Mes plays"
+              : view === "examples"
+                ? "Exemples"
+                : "Tous les plays",
+          )}{" "}
+          <span className="count">
+            {
+              library.plays.filter(
+                (p) =>
+                  view === "all" ||
+                  (view === "examples"
+                    ? library.examplePlayIds?.includes(p.id)
+                    : !library.examplePlayIds?.includes(p.id)),
+              ).length
+            }
+          </span>
         </h2>
         <span className="section-meta">
           {filtered.length} {t("affichés")}
@@ -529,13 +611,22 @@ export function LibraryWorkspace({
                     disabled={!writable}
                     onClick={() => {
                       try {
-                        void operation(duplicateInLibrary(library, p.id));
+                        void operation(duplicateInLibrary(library, p.id)).then(
+                          (saved) => {
+                            if (saved && library.examplePlayIds?.includes(p.id))
+                              changeView("personal");
+                          },
+                        );
                       } catch (e) {
                         io.setError((e as Error).message);
                       }
                     }}
                   >
-                    {t("Dupliquer")}
+                    {t(
+                      library.examplePlayIds?.includes(p.id)
+                        ? "Copier dans mes plays"
+                        : "Dupliquer",
+                    )}
                   </button>
                   <button
                     className="danger-button"
@@ -584,6 +675,11 @@ export function LibraryWorkspace({
           </article>
         ))}
       </div>
+      {view === "personal" && !filtered.length && (
+        <button onClick={() => changeView("examples")}>
+          {t("Voir les exemples")}
+        </button>
+      )}
       {!filtered.length && (
         <div className="empty-state">
           <h3>{t("Aucun système trouvé")}</h3>
@@ -705,7 +801,8 @@ export function LibraryWorkspace({
               e.preventDefault();
               void operation({
                 ...library,
-                librarySchemaVersion: 2,
+                librarySchemaVersion:
+                  library.librarySchemaVersion === 3 ? 3 : 2,
                 profile,
                 preferences: {
                   ...library.preferences,

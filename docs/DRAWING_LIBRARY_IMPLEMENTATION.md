@@ -1,0 +1,11 @@
+# Application de l’audit tracés / bibliothèque
+
+- Tous les outils sont accessibles via Type de tracé sur chaque étape : main levée, droite, courbe, écran fixe, déplacement d’écran manuel/droit/courbe. Le preset reste choisi après un tracé ; Tracer le réactive. Déplacer et Passe restent directement accessibles.
+- Le premier tracé terminé sur Placement retire son marqueur de placement dans la même commande. L’état initial reste intact, les arrivées sont propagées par le moteur existant. Un geste inachevé ou annulé ne convertit pas l’étape. L’historique rétablit le placement pur.
+- L’écran fixe utilise la géométrie ponctuelle existante. Posé sur un joueur, il reste attaché à sa position sans déplacer ce joueur ; posé librement, c’est un repère fixe. Les anciens écrans non associés conservent leur statut à confirmer.
+- Bibliothèque 3 : `examplePlayIds` représente explicitement l’appartenance. Tout autre play est personnel. La reprise des versions 1/2 conserve tous les contenus et ne classe en exemples que les plays identiques aux sources (hors dates/révision). Les contenus modifiés ou ambigus restent personnels. La migration est atomique et conserve l’état précédent.
+- Une création, une copie, un import volontaire ou une modification d’exemple devient personnel. La copie conserve l’original dans les exemples et recâble les identifiants. Une sauvegarde/restauration complète en version 3 transporte l’appartenance.
+- Recherche, catégories et collections sont croisées avec la vue. Changer de vue efface les filtres et la sélection précédents pour éviter des sélections cachées. Toute la bibliothèque conserve une portée globale explicite. Suppression et récupération incluent les références d’exemples.
+- Les anciens scénarios de régression utilisent explicitement la vue Tous via une préférence de test. Les nouveaux tests de bibliothèque utilisent un stockage neuf, donc le vrai défaut Mes plays. Aucun paramètre de test n’est nécessaire au fonctionnement de production.
+
+Recette : migration et fichiers 1/2/3, copies/imports/remplacement, profils et récupération, états avant/après et branches, preset de dessin sur Placement, annulation, rendu/animation et exports, français/anglais, clavier et mobile Chromium. Les essais iPhone/Safari réel restent distincts.

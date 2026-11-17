@@ -78,7 +78,8 @@ export interface Profile {
   logoDataUrl?: string;
 }
 export interface Library {
-  librarySchemaVersion: 1 | 2;
+  librarySchemaVersion: 1 | 2 | 3;
+  examplePlayIds?: string[];
   revision: number;
   plays: Play[];
   collections: { id: string; name: string; playIds: string[] }[];

@@ -199,6 +199,9 @@ test("mise à jour en attente sans rechargement ; activation après fermeture et
   try {
     await page.goto(url);
     await ready(page);
+    await page
+      .getByRole("button", { name: "Tous les plays (8)", exact: true })
+      .click();
     await offlineReady(page);
     await page.getByRole("searchbox").fill("stack");
     const old = await page.evaluate(async () =>

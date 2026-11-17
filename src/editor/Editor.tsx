@@ -29,6 +29,17 @@ const tools: { id: Tool; name: string; hint: string }[] = [
     name: "Tracer",
     hint: "Tracez le trajet depuis un joueur : le trait est nettoyé au relâchement.",
   },
+  { id: "line", name: "Droite", hint: "Deux appuis : départ puis arrivée." },
+  {
+    id: "screen-static",
+    name: "Écran fixe",
+    hint: "Touche un joueur ou le terrain pour poser un écran sans déplacement.",
+  },
+  {
+    id: "screen-line",
+    name: "Déplacement d’écran droit",
+    hint: "Deux appuis : départ du poseur puis arrivée.",
+  },
   {
     id: "curve",
     name: "Courbe",
@@ -46,7 +57,7 @@ const tools: { id: Tool; name: string; hint: string }[] = [
   },
   {
     id: "screen-curve",
-    name: "Écran courbe",
+    name: "Déplacement d’écran courbe",
     hint: "Trois appuis : départ du poseur, courbure, emplacement de l’écran.",
   },
   {
@@ -105,6 +116,7 @@ export function Editor({
   });
   const [preview, setPreview] = useState(false);
   const [tool, setTool] = useState<Tool>("select");
+  const [preset, setPreset] = useState<Tool>("run");
   const [selected, setSelected] = useState<Selection>(null);
   const [error, setError] = useState("");
   const [annotation, setAnnotation] = useState("");
@@ -121,9 +133,7 @@ export function Editor({
     window.history.replaceState(null, "", `${path}?${query}`);
   }, [step?.id, scope]);
   const report = draft.metadata.originalReport ?? draft.metadata.report;
-  useEffect(() => {
-    if (step?.purpose) setTool("select");
-  }, [step?.id, step?.purpose]);
+
   function apply(next: Play, groupKey = "") {
     const current = hist.current;
     const merge =
@@ -190,7 +200,7 @@ export function Editor({
     points: Point[],
     actor?: string,
     recipient?: string,
-    shape?: "polyline",
+    shape?: "polyline" | "legacy-screen",
   ) {
     if (!step) return;
     try {
@@ -209,7 +219,9 @@ export function Editor({
       setTool("select");
 
       setSelected(
-        t === "pass" ? { kind: "action", id: result.actionId, point: 0 } : null,
+        t === "pass" || t === "screen-static"
+          ? { kind: "action", id: result.actionId, point: 0 }
+          : null,
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Tracé impossible.");
@@ -777,33 +789,39 @@ export function Editor({
               ))}
             </div>
           </div>
-          {!step.purpose && (
+          {
             <div
               className="drawing-tools"
               role="toolbar"
               aria-label={t("Outils de dessin")}
             >
               {tools
-                .filter(
-                  (item) =>
-                    ["select", "run", "pass"].includes(item.id) &&
-                    (!step.purpose || item.id === "select"),
-                )
+                .filter((item) => ["select", "run", "pass"].includes(item.id))
                 .map((item) => (
                   <button
                     key={item.id}
                     aria-pressed={
                       tool === item.id ||
-                      (item.id === "run" && tool === "curve") ||
+                      (item.id === "run" &&
+                        [
+                          "line",
+                          "curve",
+                          "screen",
+                          "screen-static",
+                          "screen-line",
+                          "screen-curve",
+                        ].includes(tool)) ||
                       (item.id === "screen" && tool === "screen-curve")
                     }
                     disabled={loading}
-                    onClick={() => setTool(item.id)}
+                    onClick={() =>
+                      setTool(item.id === "run" ? preset : item.id)
+                    }
                   >
                     {t(item.name)}
                   </button>
                 ))}
-              {!step.purpose && (
+              {
                 <details className="more-draw-tools" name="board-overlays">
                   <summary>{t("Autres")}</summary>
                   <div>
@@ -816,6 +834,7 @@ export function Editor({
                           key={item.id}
                           onClick={(e) => {
                             setTool(item.id);
+                            if (item.id === "screen") setPreset(item.id);
                             e.currentTarget.closest("details")!.open = false;
                           }}
                         >
@@ -824,13 +843,49 @@ export function Editor({
                       ))}
                   </div>
                 </details>
-              )}
+              }
             </div>
-          )}
+          }
+          <label className="drawing-preset">
+            {t("Type de tracé")}
+            <select
+              aria-label={t("Type de tracé")}
+              value={preset}
+              disabled={loading}
+              onChange={(e) => {
+                setPreset(e.target.value as Tool);
+                setTool(e.target.value as Tool);
+              }}
+            >
+              {tools
+                .filter((item) =>
+                  [
+                    "run",
+                    "line",
+                    "curve",
+                    "screen-static",
+                    "screen",
+                    "screen-line",
+                    "screen-curve",
+                  ].includes(item.id),
+                )
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {t(
+                      item.id === "run"
+                        ? "Main levée"
+                        : item.id === "screen"
+                          ? "Déplacement d’écran manuel"
+                          : item.name,
+                    )}
+                  </option>
+                ))}
+            </select>
+          </label>
           {step.purpose && (
             <p className="setup-hint">
               {t(
-                "Placez les joueurs et le ballon, puis ajoutez une étape pour dessiner.",
+                "Placez les joueurs et le ballon. Vous pouvez dessiner ici ou ajouter une étape.",
               )}
             </p>
           )}

@@ -182,7 +182,7 @@ export function PlayDiagram({
               key={a.id}
               d={`M${x + 24} ${y - 17}V${y + 17}H${x + 5}`}
               className="action-screen"
-              strokeWidth="4"
+              strokeWidth={a.width ?? 4}
               fill="none"
             />
           );

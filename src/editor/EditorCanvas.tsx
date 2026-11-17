@@ -7,6 +7,9 @@ import { bounds, curve, PlayDiagram } from "../components/PlayDiagram";
 export type Tool =
   | "select"
   | "run"
+  | "line"
+  | "screen-static"
+  | "screen-line"
   | "curve"
   | "pass"
   | "screen"
@@ -44,7 +47,7 @@ export function EditorCanvas({
     points: Point[],
     actor?: string,
     recipient?: string,
-    shape?: "polyline",
+    shape?: "polyline" | "legacy-screen",
   ) => void;
   onErase: (id: string) => void;
   onAnnotation: (p: Point) => void;
@@ -284,6 +287,16 @@ export function EditorCanvas({
       ?.getAttribute("data-select-action");
     if (tool === "erase") {
       if (hitAction) onErase(hitAction);
+      return;
+    }
+    if (tool === "screen-static") {
+      onDraw(
+        tool,
+        [player?.kind === "player" ? step.afterState.players[player.id] : p],
+        player?.kind === "player" ? player.id : undefined,
+        undefined,
+        "legacy-screen",
+      );
       return;
     }
     if (tool === "annotation") {
@@ -641,7 +654,9 @@ export function EditorCanvas({
                     />
                   );
                 })()}
-              {(selectedAction?.kind === "pass"
+              {(selectedAction?.kind === "pass" ||
+              (selectedAction?.geometry.kind === "legacy-screen" &&
+                selectedAction.actorId)
                 ? undefined
                 : selectedAction
               )?.geometry.points.map((p, i) => (

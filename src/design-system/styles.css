@@ -3134,3 +3134,34 @@ main {
   white-space: normal;
   overflow-wrap: anywhere;
 }
+.library-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+.library-views button {
+  min-height: 44px;
+}
+.library-views [aria-pressed="true"] {
+  background: #1762c8;
+  color: #fff;
+  border-color: #1762c8;
+}
+.drawing-preset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  margin: 8px 0;
+}
+.drawing-preset select {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid #b5cbe8;
+  border-radius: 8px;
+  background: #fff;
+  color: #123766;
+}

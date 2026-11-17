@@ -391,9 +391,9 @@ export function validateLibrary(v: unknown): Library {
   record(
     v,
     ["librarySchemaVersion", "revision", "plays", "collections", "preferences"],
-    ["profile"],
+    ["profile", "examplePlayIds"],
   );
-  choice(v.librarySchemaVersion, [1, 2]);
+  choice(v.librarySchemaVersion, [1, 2, 3]);
   integer(v.revision, 1);
   list(v.plays, 1000);
   const plays = v.plays.map(validatePlay);
@@ -417,6 +417,14 @@ export function validateLibrary(v: unknown): Library {
     if (c.playIds.some((ref) => !plays.some((p) => p.id === ref)))
       fail("référence de collection absente");
   }
+  if (v.librarySchemaVersion === 3) {
+    list(v.examplePlayIds, 1000);
+    v.examplePlayIds.forEach(id);
+    unique(v.examplePlayIds as string[]);
+    if (v.examplePlayIds.some((ref) => !plays.some((p) => p.id === ref)))
+      fail("référence d’exemple absente");
+  } else if (v.examplePlayIds !== undefined)
+    fail("appartenance nécessitant la bibliothèque 3");
   unique(v.collections.map((c) => (c as { id: string }).id));
   if (v.profile !== undefined) {
     record(v.profile, ["coachName", "team"], ["logoDataUrl"]);

@@ -178,6 +178,7 @@ test("guide et entraînement disponibles hors ligne ; tuto accessible avec bibli
             ...r.result,
             revision: r.result.revision + 1,
             plays: [],
+            ...(r.result.examplePlayIds ? { examplePlayIds: [] } : {}),
             collections: [],
           },
           "current",
