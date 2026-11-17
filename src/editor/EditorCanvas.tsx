@@ -624,6 +624,7 @@ export function EditorCanvas({
                   return (
                     <circle
                       data-board-ball=""
+                      pointerEvents={tool === "select" ? "auto" : "none"}
                       stroke="transparent"
                       strokeWidth="24"
                       vectorEffect="non-scaling-stroke"

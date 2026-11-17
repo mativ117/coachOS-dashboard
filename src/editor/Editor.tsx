@@ -219,6 +219,10 @@ export function Editor({
     selected?.kind === "action"
       ? step?.actions.find((a) => a.id === selected.id)
       : undefined;
+  const hasContextHelp =
+    tool === "annotation" ||
+    (tool === "select" &&
+      (selected?.kind === "ball" || action?.kind === "pass"));
   const ballValue = (ball: BallState) =>
     ball?.mode === "attached"
       ? ball.carrierId
@@ -680,6 +684,41 @@ export function Editor({
         <>
           <div className="editor-timeline">
             <div className="timeline-top">
+              <div
+                className="step-navigation"
+                aria-label={t("Parcourir les étapes")}
+              >
+                <button
+                  aria-label={t("Étape précédente")}
+                  title={t("Étape précédente")}
+                  disabled={steps.indexOf(step) === 0}
+                  onClick={() => {
+                    setStepId(steps[steps.indexOf(step) - 1].id);
+                    setSelected(null);
+                  }}
+                >
+                  ←
+                </button>
+                <span>
+                  {t(
+                    "Étape {0} sur {1}",
+                    steps.indexOf(step) + 1,
+                    steps.length,
+                  )}
+                </span>
+                <button
+                  aria-label={t("Étape suivante")}
+                  title={t("Étape suivante")}
+                  disabled={steps.indexOf(step) === steps.length - 1}
+                  onClick={() => {
+                    setStepId(steps[steps.indexOf(step) + 1].id);
+                    setSelected(null);
+                  }}
+                >
+                  →
+                </button>
+              </div>
+
               {draft.branches.length > 0 && (
                 <label>
                   {t("Lecture")}
@@ -795,7 +834,7 @@ export function Editor({
               )}
             </p>
           )}
-          {!step.purpose && (
+          {!step.purpose && !hasContextHelp && (
             <p className="tool-hint" role="status">
               {t(tools.find((item) => item.id === tool)!.hint)}
             </p>
@@ -839,6 +878,64 @@ export function Editor({
                 "Des éléments sont hors du cadre. « Recadrer » permet de les retrouver.",
               )}
             </p>
+          )}
+          {tool === "select" && selected?.kind === "ball" && (
+            <p className="board-context" role="status">
+              {t(
+                "Ballon sélectionné : touche un joueur pour lui donner le ballon, ou un endroit vide pour le poser.",
+              )}
+            </p>
+          )}
+          {tool === "annotation" && (
+            <label className="board-context annotation-context">
+              {t("Texte à placer")}
+              <input
+                aria-label={t("Annotation à placer")}
+                maxLength={300}
+                value={annotation}
+                onChange={(e) => setAnnotation(e.target.value)}
+                autoFocus
+              />
+              <span>
+                {t("Écris ici, puis touche le terrain pour placer le texte.")}
+              </span>
+            </label>
+          )}
+          {tool === "select" && action?.kind === "pass" && (
+            <div className="board-context pass-context">
+              <span>
+                {t(
+                  "Passe {0} → {1}",
+                  action.actorId ?? "?",
+                  action.recipientId ?? "?",
+                )}
+              </span>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={action.status === "confirmed"}
+                  disabled={loading}
+                  onChange={(e) =>
+                    run(() =>
+                      commands.confirmPass(
+                        draft,
+                        step.id,
+                        action.id,
+                        e.target.checked,
+                      ),
+                    )
+                  }
+                />
+                {t("Exécuter cette passe")}
+              </label>
+              <span>
+                {action.status === "confirmed"
+                  ? t("Le ballon sera transmis pendant la lecture.")
+                  : t(
+                      "Option dessinée : active-la pour transmettre le ballon pendant la lecture.",
+                    )}
+              </span>
+            </div>
           )}
           <EditorCanvas
             key={draft.id}
@@ -898,11 +995,8 @@ export function Editor({
           />
 
           <div className="editor-panels">
-            {(action || tool === "annotation") && (
-              <details
-                className="editor-panel"
-                open={action?.kind === "pass" || tool === "annotation"}
-              >
+            {action && (
+              <details className="editor-panel">
                 <summary>
                   {t("Sélection")}
                   {selected?.kind === "player"
@@ -989,23 +1083,6 @@ export function Editor({
                               ))}
                             </select>
                           </label>
-                          <label className="checkbox-label">
-                            <input
-                              type="checkbox"
-                              checked={action.status === "confirmed"}
-                              onChange={(e) =>
-                                run(() =>
-                                  commands.confirmPass(
-                                    draft,
-                                    step.id,
-                                    action.id,
-                                    e.target.checked,
-                                  ),
-                                )
-                              }
-                            />
-                            {t("Exécuter cette passe")}
-                          </label>
                         </>
                       )}
                       {action.kind !== "annotation" && (
@@ -1080,17 +1157,6 @@ export function Editor({
                         {t("Supprimer le tracé")}
                       </button>
                     </>
-                  )}
-                  {tool === "annotation" && (
-                    <label>
-                      {t("Texte à placer")}
-                      <input
-                        aria-label={t("Annotation à placer")}
-                        maxLength={300}
-                        value={annotation}
-                        onChange={(e) => setAnnotation(e.target.value)}
-                      />
-                    </label>
                   )}
                 </div>
               </details>

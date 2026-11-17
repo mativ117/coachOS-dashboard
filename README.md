@@ -34,7 +34,7 @@ Le choix **Français / English** est accessible dans l’en-tête et dans **Rég
 
 Choose **English** in the top bar, or under **Settings** in the editor. Create a play, place your players and ball, then add a step and draw movements explicitly. To change possession, select the orange ball first, then the receiving player. **Tutorial** includes a practice court that leaves your library untouched.
 
-Use **Export** above the court, in presentation mode or on a play card. **Full play PDF** includes every step and alternative read, with at most two lines of instructions per diagram. **All PNG diagrams (.zip)** contains one image per step, including all alternative reads. A single step PNG remains available under **Current step only**. Files go to your browser’s downloads; **Share file** lets you send them. Choose **Back up library** to keep an editable full backup. Data stays in this browser on this device; it does not sync across devices.
+Use **Export** above the court, in presentation mode or on a play card. **Full play PDF** includes every step and alternative read, with at most two lines of instructions per diagram. **All PNG diagrams (.zip)** contains one image per step, including all alternative reads. A single step PNG remains available under **Current step only**. Files go to your browser’s downloads; **Share file** lets you send them. Open **Import and back up**, then choose **Back up library** to keep an editable full backup. Data stays in this browser on this device; it does not sync across devices.
 
 ## Lancer et vérifier
 
@@ -75,3 +75,5 @@ Les tests couvrent modèles, horloge, géométries, transactions via fake-indexe
 Ne pas modifier les sources originales, inventer des déplacements ou déployer avant validation explicite.
 
 L’export privilégie le play complet et ses visuels. Voir `docs/COMPLETE_EXPORT_REVIEW.md`.
+
+Audit UX documenté : `docs/UX_AUDIT_2026_11.md`. La validation de passe et la saisie d’annotation sont placées avant le terrain ; les flèches parcourent les étapes. Import et sauvegarde sont regroupés dans **Importer et sauvegarder**, et les informations des plays de départ sont repliables. Les gestes de dessin et le modèle tactique sont conservés.

@@ -192,7 +192,7 @@ export function Tutorial({ returnHref }: { returnHref: string }) {
             <dt>{t("Exécuter cette passe")}</dt>
             <dd>
               {t(
-                "Une passe dessinée est d’abord une option. Dans ses réglages, coche ",
+                "Une passe dessinée est d’abord une option. Juste au-dessus du terrain, coche ",
               )}
               <strong>{t("Exécuter cette passe")}</strong>{" "}
               {t(
@@ -339,7 +339,7 @@ export function Tutorial({ returnHref }: { returnHref: string }) {
           <summary>{t("Copie modifiable et sauvegarde complète")}</summary>
           <p>
             {t(
-              "Dans Exporter, ouvre « Garder un système modifiable dans CoachOS » pour obtenir un fichier .coachos. Dans la bibliothèque, « Sauvegarder la bibliothèque » conserve tous tes systèmes et réglages pour les réimporter sur un autre appareil.",
+              "Dans Exporter, ouvre « Garder un système modifiable dans CoachOS » pour obtenir un fichier .coachos. Dans la bibliothèque, ouvre « Importer et sauvegarder », puis choisis « Sauvegarder la bibliothèque » pour conserver tous tes systèmes et réglages.",
             )}
           </p>
           <p>
