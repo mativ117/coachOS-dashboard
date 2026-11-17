@@ -3165,3 +3165,15 @@ main {
   background: #fff;
   color: #123766;
 }
+.card-body > .resume-caption {
+  min-height: 0;
+  margin: 8px 0;
+  color: #1762c8;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.clear-library-filters {
+  min-height: 44px;
+  margin: 0 0 12px;
+}

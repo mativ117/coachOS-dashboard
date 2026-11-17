@@ -1,4 +1,12 @@
 export default {
+  "Effacer les filtres": "Clear filters",
+  "Trier les plays": "Sort plays",
+  "Récents d’abord": "Recent first",
+  "Nom A → Z": "Name A → Z",
+  "Reprise : étape {0}": "Resume: step {0}",
+  "Reprendre {0}": "Resume {0}",
+  Reprendre: "Resume",
+
   "Type de tracé permet de choisir main levée, droite (2 appuis), courbe (3 appuis), écran fixe ou déplacement d’écran. Ces outils sont disponibles dès Placement. Le premier dessin conserve les positions de départ et transforme Placement en étape d’action.":
     "Drawing type offers freehand, straight lines (2 taps), curves (3 taps), stationary screens and screen movements. All tools are available from Setup. The first drawing keeps the starting positions and turns Setup into an action step.",
   "La bibliothèque s’ouvre sur Mes plays. Exemples contient les systèmes fournis ; Copier dans mes plays crée une copie complète à adapter.":

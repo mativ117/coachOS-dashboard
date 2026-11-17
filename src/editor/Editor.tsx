@@ -1,3 +1,4 @@
+import { rememberStep } from "../library/resume";
 import { LanguagePicker } from "../i18n/LanguagePicker";
 import { t } from "../i18n";
 import { ExportControl } from "../files/ExportControl";
@@ -131,6 +132,7 @@ export function Editor({
     query.set("step", step.id);
     query.set("branch", scope);
     window.history.replaceState(null, "", `${path}?${query}`);
+    rememberStep(play.id, step.id, scope);
   }, [step?.id, scope]);
   const report = draft.metadata.originalReport ?? draft.metadata.report;
 
