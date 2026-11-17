@@ -86,6 +86,10 @@ export function buildImport(
   for (const row of importRows(current, incoming)) {
     const { play, status, internalCollision } = row;
     if (status === "identical") {
+      if (next.examplePlayIds)
+        next.examplePlayIds = next.examplePlayIds.filter(
+          (id) => id !== play.id,
+        );
       mapping.set(play.id, play.id);
       continue;
     }
@@ -100,6 +104,8 @@ export function buildImport(
       );
     const imported =
       choice === "copy" ? duplicatePlay(play) : structuredClone(play);
+    if (choice !== "copy" && next.examplePlayIds)
+      next.examplePlayIds = next.examplePlayIds.filter((id) => id !== play.id);
     mapping.set(play.id, imported.id);
     const index = next.plays.findIndex((p) => p.id === imported.id);
     if (index < 0) next.plays.push(imported);
@@ -131,7 +137,7 @@ export function buildImport(
     next.profile ||
     Object.keys(next.preferences).some((k) => k !== "courtPreview")
   )
-    next.librarySchemaVersion = 2;
+    next.librarySchemaVersion = next.librarySchemaVersion === 3 ? 3 : 2;
   next.revision = current.revision + 1;
   return validateLibrary(next);
 }

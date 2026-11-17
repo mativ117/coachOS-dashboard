@@ -185,7 +185,11 @@ test("écran de travail : terrain directement visible, étapes avant le board et
   const timeline = (await page.locator(".editor-timeline").boundingBox())!,
     board = (await page.locator(".editor-surface").boundingBox())!;
   expect(timeline.y).toBeLessThan(board.y);
-  expect(board.y).toBeLessThan(450);
+  await expect(
+    page.getByRole("combobox", { name: "Type de tracé", exact: true }),
+  ).toBeVisible();
+  expect(board.y).toBeLessThan(550);
+  expect(page.viewportSize()!.height - board.y).toBeGreaterThan(160);
   await expect(
     page.getByRole("toolbar", { name: "Outils de dessin" }).getByRole("button"),
   ).toHaveCount(3);

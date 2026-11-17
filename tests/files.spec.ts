@@ -158,6 +158,10 @@ test("sauvegarde complète, aperçu de restauration et récupération de l’ét
   expect(backup.library.profile?.team).toBe("OWLS U18");
   const reduced = structuredClone(backup.library);
   reduced.plays = reduced.plays.slice(0, 1);
+  if (reduced.examplePlayIds)
+    reduced.examplePlayIds = reduced.examplePlayIds.filter((id) =>
+      reduced.plays.some((p) => p.id === id),
+    );
   reduced.collections = [
     {
       id: "only",
@@ -241,7 +245,12 @@ test("import malformé et quota : aucune mutation ; copie/collections sans dupli
     (window as unknown as { restorePut: () => void }).restorePut(),
   );
   const card = await menu(page, "Pin Down Iso");
-  await card.getByRole("button", { name: "Dupliquer", exact: true }).click();
+  await card
+    .getByRole("button", { name: "Copier dans mes plays", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Tous les plays (9)", exact: true })
+    .click();
   await ready(page);
   await expect(page.getByRole("article")).toHaveCount(9);
   const library = await db(page);

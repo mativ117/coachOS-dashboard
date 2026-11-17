@@ -1,3 +1,4 @@
+import { classifyLibrary } from "../library/ownership";
 import { useEffect, useRef, useState } from "react";
 import type { Library, Play } from "../model/types";
 import { seedLibrary } from "../migration/seed";
@@ -41,6 +42,21 @@ export function useLibrary() {
           }
         }
         if (!stored) throw new Error("Bibliothèque introuvable.");
+        if (stored.librarySchemaVersion !== 3) {
+          const upgraded = {
+            ...classifyLibrary(stored, seedLibrary().plays),
+            revision: stored.revision + 1,
+          };
+          try {
+            await opened.save(upgraded, stored.revision, true);
+            stored = upgraded;
+          } catch (e) {
+            if (!(e instanceof StorageConflict)) throw e;
+            const latest = await opened.read();
+            if (!latest || latest.librarySchemaVersion !== 3) throw e;
+            stored = latest;
+          }
+        }
         if (!cancelled) {
           repo.current = opened;
           persisted.current = stored;
@@ -120,6 +136,9 @@ export function useLibrary() {
               : p,
           )
         : [...base.plays, play],
+      ...(base.examplePlayIds
+        ? { examplePlayIds: base.examplePlayIds.filter((id) => id !== play.id) }
+        : {}),
     }));
   }
   function updatePreferences(courtPreview: "half" | "full") {
@@ -168,7 +187,10 @@ export function useLibrary() {
     setAtomicBusy(true);
     setStatus("saving");
     try {
-      const next = { ...candidate, revision: expectedRevision + 1 };
+      const next = {
+        ...classifyLibrary(candidate, seedLibrary().plays),
+        revision: expectedRevision + 1,
+      };
       await repo.current.save(next, expectedRevision, preservePrevious);
       persisted.current = next;
       visible.current = next;

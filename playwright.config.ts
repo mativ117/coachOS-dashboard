@@ -8,6 +8,15 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4192/coachOS-dashboard/",
     launchOptions: { executablePath: process.env.CHROMIUM_PATH },
     screenshot: "only-on-failure",
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: "http://127.0.0.1:4192",
+          localStorage: [{ name: "coachos.library.view", value: "all" }],
+        },
+      ],
+    },
   },
   projects: [
     { name: "model-storage", testMatch: /(?:model|storage)\.spec\.ts/ },
